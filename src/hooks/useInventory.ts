@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNostr } from '@nostrify/react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/hooks/useToast';
+import { useSharing } from '@/hooks/useSharing';
 import { useState, useCallback } from 'react';
 import type { InventoryItem, QuantityUpdate } from '@/lib/inventoryTypes';
 
@@ -24,7 +25,8 @@ function eventToInventoryItem(event: any): InventoryItem {
     on_shopping_list: tags.on_shopping_list === 'true',
     priority: (tags.priority as 'low' | 'medium' | 'high') || 'medium',
     created_at: event.created_at,
-    event_id: event.id
+    event_id: event.id,
+    author_pubkey: event.pubkey
   };
 }
 
@@ -53,25 +55,31 @@ export function useInventory() {
   const { user } = useCurrentUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sharedWithMe } = useSharing();
 
-  // Query: Get all inventory items
+  // Get all author pubkeys to query (user + people sharing with them)
+  const authorPubkeys = user
+    ? [user.pubkey, ...sharedWithMe.map(s => s.pubkey)]
+    : [];
+
+  // Query: Get all inventory items (own + shared)
   const { data: items = [], isLoading: loading, error } = useQuery({
-    queryKey: ['inventory', user?.pubkey],
+    queryKey: ['inventory', user?.pubkey, authorPubkeys.length],
     queryFn: async (c) => {
-      if (!user) return [];
+      if (!user || authorPubkeys.length === 0) return [];
 
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(1500)]);
+      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       const events = await nostr.query([
         {
           kinds: [INVENTORY_KIND],
-          authors: [user.pubkey],
-          limit: 100
+          authors: authorPubkeys,
+          limit: 200
         }
       ], { signal });
 
       return events.map(eventToInventoryItem);
     },
-    enabled: !!user
+    enabled: !!user && authorPubkeys.length > 0
   });
 
   // Mutation: Add or update inventory item
@@ -79,7 +87,7 @@ export function useInventory() {
     mutationFn: async (item: Partial<InventoryItem>) => {
       if (!user) throw new Error('Must be logged in');
 
-      const event = await nostr.signEvent(inventoryItemToEvent(item, user.pubkey));
+      const event = await user.signer.signEvent(inventoryItemToEvent(item, user.pubkey));
       await nostr.event(event);
 
       return item as InventoryItem;
@@ -119,7 +127,7 @@ export function useInventory() {
         on_shopping_list
       };
 
-      const event = await nostr.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
+      const event = await user.signer.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
       await nostr.event(event);
 
       return { updatedItem, update };
@@ -158,7 +166,7 @@ export function useInventory() {
         quantity: purchased !== undefined ? purchased : item.quantity
       };
 
-      const event = await user.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
+      const event = await user.signer.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
       await nostr.event(event);
 
       return updatedItem;
@@ -195,7 +203,7 @@ export function useInventory() {
         pubkey: user.pubkey
       };
 
-      const event = await nostr.signEvent(deletionEvent as any);
+      const event = await user.signer.signEvent(deletionEvent as any);
       await nostr.event(event);
 
       return itemId;

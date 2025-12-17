@@ -2,19 +2,23 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ShoppingCart, Package, TrendingDown, Home } from 'lucide-react';
+import { Plus, ShoppingCart, Package, TrendingDown, Home, Share2 } from 'lucide-react';
 
 import { useInventory } from '@/hooks/useInventory';
+import { useSharing } from '@/hooks/useSharing';
 import { CATEGORIES, CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from '@/lib/inventoryTypes';
 import { CategoryView } from '@/components/inventory/CategoryView';
 import { ShoppingListView } from '@/components/inventory/ShoppingListView';
 import { AddItemDialog } from '@/components/inventory/AddItemDialog';
+import { ShareInventoryModal } from '@/components/inventory/ShareInventoryModal';
 import { QuickStats } from '@/components/inventory/QuickStats';
 
 export function Inventory() {
   const [activeTab, setActiveTab] = useState('inventory');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
+  const { sharedWithMe } = useSharing();
   const { items, shoppingListItems, loading } = useInventory();
 
   if (loading && items.length === 0) {
@@ -71,10 +75,26 @@ export function Inventory() {
                   </TabsTrigger>
                 </TabsList>
 
-                <Button onClick={() => setAddDialogOpen(true)} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setShareDialogOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="relative"
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                    {sharedWithMe.length > 0 && (
+                      <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-medium bg-green-500 text-white rounded-full">
+                        {sharedWithMe.length}
+                      </span>
+                    )}
+                  </Button>
+                  <Button onClick={() => setAddDialogOpen(true)} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
               </div>
             </CardHeader>
 
@@ -96,6 +116,9 @@ export function Inventory() {
 
         {/* Add Item Dialog */}
         <AddItemDialog open={addDialogOpen} onOpenChange={setAddDialogOpen} />
+
+        {/* Share Inventory Modal */}
+        <ShareInventoryModal open={shareDialogOpen} onOpenChange={setShareDialogOpen} />
       </div>
     </div>
   );

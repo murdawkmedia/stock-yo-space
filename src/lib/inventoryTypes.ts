@@ -9,6 +9,7 @@ export interface InventoryItem {
   priority: 'low' | 'medium' | 'high';
   created_at: number;
   event_id?: string;
+  author_pubkey?: string; // pubkey of the item owner (for shared items)
 }
 
 export interface InventoryState {
@@ -41,4 +42,10 @@ export interface QuantityUpdate {
   item: InventoryItem;
   newQuantity: number;
   purchased?: number; // for shopping list checkoffs
+}
+
+export interface SharedInventory {
+  pubkey: string;     // hex pubkey of the person sharing with you
+  npub?: string;      // npub format for display
+  addedAt: number;    // timestamp when sharing was added
 }
