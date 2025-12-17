@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNostr, useCurrentUser } from '@/hooks';
+import { useNostr } from '@nostrify/react';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/hooks/useToast';
 import { useState, useCallback } from 'react';
 import type { InventoryItem, QuantityUpdate } from '@/lib/inventoryTypes';
@@ -78,7 +79,7 @@ export function useInventory() {
     mutationFn: async (item: Partial<InventoryItem>) => {
       if (!user) throw new Error('Must be logged in');
 
-      const event = await user.signEvent(inventoryItemToEvent(item, user.pubkey));
+      const event = await nostr.signEvent(inventoryItemToEvent(item, user.pubkey));
       await nostr.event(event);
 
       return item as InventoryItem;
@@ -118,7 +119,7 @@ export function useInventory() {
         on_shopping_list
       };
 
-      const event = await user.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
+      const event = await nostr.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
       await nostr.event(event);
 
       return { updatedItem, update };
@@ -194,7 +195,7 @@ export function useInventory() {
         pubkey: user.pubkey
       };
 
-      const event = await user.signEvent(deletionEvent as any);
+      const event = await nostr.signEvent(deletionEvent as any);
       await nostr.event(event);
 
       return itemId;
