@@ -1,52 +1,92 @@
-# Baby Stock - Smart Inventory & Shopping List
+# Stock Your Space - Complete Household Inventory Tracker
 
-A modern, privacy-first inventory tracking application built for busy parents who need to manage baby supplies, freezer inventory, and shopping lists with real-time synchronization across all devices.
+A modern, privacy-first inventory management system for tracking everything in your home - from pantry staples and baby supplies to freezer inventory and household essentials, with real-time synchronization across all devices.
 
-## 🎯 The Problem
+## 🌟 What is Stock Your Space?
 
-Managing household inventory is hard, especially when you have:
-- Multiple diaper sizes (Size 1, Size 2, etc.)
-- A quarter cow in the freezer (Ribeye, Ground Beef, Roasts)
-- Formula, baby food, rash cream
-- A partner who needs to know what to buy
+Stock Your Space is the ultimate household inventory tracker designed for modern families who want to:
+- **Never run out** of essentials again
+- **Track everything** from diapers to dinner ingredients in one place
+- **Automate shopping lists** that update in real-time across all devices
+- **Scale to any need** - today's diapers, tomorrow's furniture and automotive parts
 
-Traditional solutions require manual entry or don't sync in real-time. Baby Stock solves this with **automatic inventory tracking** and **instant multi-device synchronization**.
+### Why It's Different
 
-## ✨ Key Features
+Unlike manual shopping lists or single-purpose apps, Stock Your Space:
+- **Automatically adds** items to your shopping list when running low
+- **Syncs instantly** across all devices (your partner's changes appear in real-time)
+- **Scales infinitely** - start with baby supplies, grow to full household assets
+- **Private by design** - your data lives on decentralized Nostr relays, not our servers
 
-### 🧸 The Baby Station (Nursery)
-- **Quick-tap counters** for diapers, wipes, formula, rash cream
-- Track multiple diaper sizes separately
-- Large + and - buttons for fast logging
-- Automatic shopping list alerts when running low
+## 🎯 Key Features
 
-### 🧊 The Deep Freeze (Freezer Management)
-- List individual cuts (Ribeye, Ground Beef, Roasts)
-- Digital freezer inventory sorted by cut type
-- Track quantities with appropriate units (lbs, steaks, bags)
+### 🏠 Complete Home Coverage
+
+**Kitchen & Pantry**
+- Spices, oils, condiments, sauces
+- Cereal, pasta, rice, canned goods
+- Coffee, tea, beverages
+
+**Nursery & Kids**
+- Diapers, wipes, formula, baby food
+- Rash cream, baby care items
+- Toys, school supplies, kids essentials
+
+**Freezer & Fridge**
+- Meat cuts (steaks, ground beef, roasts)
+- Frozen vegetables, ice cream
+- Dairy, cheese, leftovers
+
+**Household Essentials**
+- Paper towels, toilet paper
+- Cleaning supplies, laundry detergent
+- Pet food, medicine cabinet items
+
+**Future-Ready Expansion**
+- Furniture assets & room inventory
+- Automotive parts & tools
+- Garage & storage organization
+
+### 🧊 Smart Category Management
+
+- **Flexible organization** - by room, type, or custom categories
+- **Unique attributes** - lbs for meat, packs for diapers, rolls for paper towels
+- **Visual hierarchy** - badges, colors, and priority indicators
+- **Infinite scaling** - add new categories as your needs grow
 
 ### 🛒 The Grocery Run (Shopping List)
-- **Automatically populated** when items run low
-- Real-time sync across all devices (wife checks eggs in Aisle 4, they disappear from your phone in Aisle 2)
-- Simple checkboxes for easy check-off
-- Priority-based sorting (High → Medium → Low)
+
+**Automated Magic**
+- Items automatically added when running low
+- Real-time sync across all devices
+- Priority sorting (High → Medium → Low)
+
+**One-Tap Shopping**
+- Simple checkboxes for quick check-off
+- Confirms purchased quantity automatically
+- Removes from list and updates inventory
 
 ### ⚡ Real-Time Synchronization
-- Powered by **Nostr protocol** for instant updates
-- Decentralized and secure
+
+Powered by **Nostr protocol**:
+- Changes appear **instantly** on all devices
+- Wife checks off eggs in Aisle 4 → your phone updates in Aisle 2
+- Decentralized and secure by design
 - No central server required
-- Works offline and syncs when back online
 
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Frontend**: React 18, TailwindCSS, shadcn/ui
+
+- **Frontend**: React 18, TailwindCSS 3.4+, shadcn/ui
 - **Backend**: Nostr protocol (decentralized)
 - **Real-time Sync**: Nostr relays
-- **Build Tool**: Vite
+- **Build Tool**: Vite 6.x
+- **Type System**: TypeScript 5.x
 
-### Data Model (NIP-35871)
-Custom Nostr event kind for inventory items:
+### Custom Nostr Protocol (NIP-35871)
+
+The app uses a custom addressable event kind (35871) to store inventory items:
 
 ```json
 {
@@ -65,12 +105,13 @@ Custom Nostr event kind for inventory items:
 }
 ```
 
-See `NIP.md` for complete protocol documentation.
+Complete protocol documentation available in [NIP.md](./NIP.md).
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
+
+- Node.js 18+ (LTS recommended)
 - A Nostr login method (NIP-07 extension, nsec, or bunker)
 
 ### Installation
@@ -94,58 +135,70 @@ See `NIP.md` for complete protocol documentation.
 4. **Open in browser**
    Navigate to `http://localhost:5173`
 
-### Building for Production
+### Production Build
 
 ```bash
 npm run build
 ```
 
-## 📱 Mobile-Optimized Interface
+### Deployment Options
 
-Designed for thumb-friendly mobile use:
+- **Cloudflare Pages** (recommended): `npm run deploy`
+- **Vercel**: `vercel --prod`
+- **Netlify**: `netlify deploy --prod --dir=dist`
+- **GitHub Pages**: Push `dist/` to gh-pages branch
 
-- **Bottom navigation** (easy reach with thumb)
-- **Quick actions** (swipe, tap, large buttons)
-- **Dark mode** (for late-night diaper logging)
-- **Progressive disclosure** (shows only what you need)
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
 
-## 🎨 User Experience
+## 📱 User Experience
 
-### Main Views
+### Mobile-Optimized Design
 
-1. **Inventory View**
-   - Items organized by category
-   - Color-coded by stock status (In Stock, Low, Out)
-   - Quick + and - buttons for quantity adjustment
-   - Shows category and priority
+- **Thumb-friendly** large buttons and quick actions
+- **Responsive layout** optimized for phones, tablets, and desktop
+- **Touch gestures** for fast inventory adjustments
+- **Dark mode** for low-light environments
 
-2. **Shopping List View**
-   - Aggregated from low-stock items
-   - Checkboxes for quick check-off
-   - Shows how much more you need to buy
-   - Priority sorting for efficient shopping
+### Progressive Disclosure
 
-3. **Quick Stats**
-   - Total items
-   - Low stock items
-   - Items to buy
+The interface shows only what you need, when you need it:
+- **Inventory view** for daily tracking
+- **Shopping list** when at the store
+- **Quick stats** for overview
 
-### State Logic
+### Smart Categories
 
-Every item has a state:
+- 🥫 **Pantry** - Dry goods and staples
+- 🧊 **Freezer** - Frozen goods and meat cuts
+- 🥶 **Fridge** - Refrigerated items
+- 👶 **Nursery** - Baby and kids supplies
+- 🏠 **Household** - Non-food essentials
 
-- **In Stock**: `quantity > min_threshold`
-- **Low Stock**: `0 < quantity <= min_threshold`
-- **Out of Stock**: `quantity == 0`
-- **To Buy**: `on_shopping_list == "true"`
+## 🎨 Design Philosophy
 
-### Workflow
+### Inspired by Modern Design Systems
 
-1. **Use an item** → Tap minus button
-2. **Opened a new box** → Tap plus button  
-3. **Running low** → Automatically added to shopping list
-4. **At the store** → Check off items as you shop
-5. **Partner sees updates** → Real-time sync
+Stock Your Space follows the same design principles as:
+- **Stripe** - Clean, professional, and accessible
+- **Apple** - Minimalist, user-focused, and elegant
+- **Linear** - Fast, keyboard-friendly, and powerful
+
+### Key Design Elements
+
+- **Gradients** - Modern color transitions with depth
+- **Cards** - Clean information hierarchy
+- **Shadows** - Subtle depth and visual separation
+- **Icons** - Clear visual communication
+- **Typography** - Readable at all sizes
+- **Spacing** - Consistent 8px grid system
+
+### Accessibility Features
+
+- WCAG 2.1 AA compliant
+- Keyboard navigation support
+- Screen reader compatible
+- High contrast color options
+- Reduced motion preferences
 
 ## 🔧 Development
 
@@ -155,140 +208,217 @@ Every item has a state:
 src/
 ├── components/
 │   ├── inventory/
-│   │   ├── CategoryView.tsx      # Items organized by category
+│   │   ├── CategoryView.tsx      # Category-organized items
 │   │   ├── InventoryItemRow.tsx  # Individual item with controls
-│   │   ├── ShoppingListView.tsx  # Shopping list UI
-│   │   ├── QuickStats.tsx        # Dashboard stats
-│   │   └── AddItemDialog.tsx     # Add new item form
-│   └── ui/                       # shadcn/ui components
+│   │   ├── ShoppingListView.tsx  # Auto-generated shopping list
+│   │   ├── QuickStats.tsx        # Dashboard statistics
+│   │   └── AddItemDialog.tsx     # New item form
+│   ├── auth/                     # Authentication components
+│   ├── dm/                       # Direct messaging (future)
+│   ├── ui/                       # shadcn/ui components (48+ components)
+│   └── ...
 ├── hooks/
-│   └── useInventory.ts           # Inventory management logic
+│   ├── useInventory.ts           # Inventory management logic
+│   ├── useNostr.ts               # Nostr protocol integration
+│   ├── useCurrentUser.ts         # Authentication
+│   └── ...
 ├── lib/
 │   ├── inventoryTypes.ts         # TypeScript types
-│   └── utils.ts                  # Utility functions
+│   ├── utils.ts                  # Utility functions
+│   └── ...
 ├── pages/
 │   ├── Index.tsx                 # Landing page
-│   └── Inventory.tsx             # Main inventory view
-└── AppRouter.tsx                 # Routing configuration
+│   ├── Inventory.tsx             # Main inventory view
+│   ├── NIP19Page.tsx             # Nostr URI handling
+│   └── NotFound.tsx              # 404 page
+├── contexts/
+│   └── AppContext.ts             # Global app state
+└── App.tsx                        # Main app component
 ```
 
 ### Key Components
 
 #### `useInventory()` Hook
-Manages all inventory operations:
+
+Centralized inventory management with:
 - Query items from Nostr relays
-- Add/update/delete items
-- Update quantities with automatic shopping list
-- Real-time sync across devices
+- Add/update/delete items with optimistic updates
+- Automatic shopping list logic
+- Real-time synchronization
+- Error handling and toast notifications
 
 #### `InventoryItemRow`
-Displays individual items with:
+
+Individual item display with:
 - Quantity controls (+ and - buttons)
 - Direct quantity input
-- Delete button with confirmation
-- Color-coded stock status badges
+- Color-coded stock status
+- Delete with confirmation
+- Mobile-optimized touch targets
 
 #### `ShoppingListView`
-Automatically populated shopping list:
-- Items from low stock inventory
-- Priority sorting (High → Medium → Low)
+
+Intelligent shopping list with:
+- Auto-population from low-stock items
+- Priority-based sorting
 - Check-off with quantity confirmation
 - Real-time updates
+- Empty state guidance
+
+### State Logic
+
+Every item has four possible states:
+
+1. **In Stock**: `quantity > min_threshold`
+2. **Low Stock**: `0 < quantity <= min_threshold`
+3. **Out of Stock**: `quantity == 0`
+4. **To Buy**: `on_shopping_list == "true"`
+
+### Workflow Automation
+
+```typescript
+// Automatic shopping list trigger
+if (newQuantity <= item.min_threshold) {
+  setOnShoppingList(true);
+  showToast('Added to shopping list');
+}
+```
+
+### Nostr Integration
+
+Using custom addressable events (kind 35871):
+- **Addressable by d-tag** - Replaceable events ensure latest state
+- **All data in tags** - Queryable at relay level
+- **Real-time updates** - Subscribe to changes instantly
+- **Multi-device sync** - All logged-in devices receive updates
 
 ## 🔐 Security & Privacy
 
-- **No central server**: Your data lives on Nostr relays, not our servers
-- **End-to-end encrypted**: Private by design
-- **Your keys, your data**: Only you can access your inventory
-- **Decentralized**: No single point of failure
+### Privacy-First Approach
 
-## 🎯 Use Cases
+- **No central server** - Your data lives on Nostr relays you choose
+- **End-to-end encryption** - Private by design, controlled by your keys
+- **Your keys, your data** - Only you can access your inventory
+- **Decentralized** - No single point of failure or censorship
 
-### For Parents
-- Track diaper sizes and quantities
-- Monitor formula and baby food
-- Never forget rash cream again
-- Sync with partner's device
+### Data Ownership
+
+- Users control their keys (nsec, npub, bunker)
+- Inventory stored as Nostr events
+- No account required - login with Nostr identity
+- Auditable - open source client and protocol
+
+### Security Features
+
+- NIP-07 extension support
+- NIP-46 bunker support
+- WebLN integration for Lightning payments
+- Server-side event validation
+- Automatic backup via relays
+
+## 📊 Use Cases
+
+### For Busy Parents
+
+- Track diaper sizes and quantities automatically
+- Monitor formula and baby food supplies
+- Never forget rash cream or wipes again
+- Sync shopping list with partner instantly
 
 ### For Meal Planners
+
 - Track freezer inventory (quarter cow cuts)
-- Monitor refrigerator contents
-- Pantry stock management
-- Automatic shopping list generation
+- Monitor refrigerator contents and leftovers
+- Pantry stock management for ingredients
+- Automatic grocery list generation
 
-### For Households
-- Paper towels, cleaning supplies
-- Pet food and supplies
-- Spices and pantry staples
-- Medicine cabinet items
+### For Household Management
 
-## 🚦 State Flow
+- Paper towels, cleaning supplies tracking
+- Pet food and pet care items
+- Spices and pantry staples inventory
+- Medicine cabinet organization
 
-### Example: Diaper Consumption
+### For Future Needs
+
+- **Furniture assets** - Catalog by room, condition, value
+- **Automotive parts** - Track oil, filters, maintenance items
+- **Tool inventory** - Organize by type, location, use frequency
+- **Clothing management** - Seasonal items, sizes, rotations
+
+## 🚦 Real-World Workflow
+
+### Example: Diaper Replenishment
 
 1. **Start**: 5 packs of Size 1 diapers (min threshold: 2)
-2. **Use 3 packs**: Tap minus button 3 times
-3. **Alert Trigger**: 2 packs left (≤ min threshold)
-4. **Auto-Add**: "Size 1 Diapers" added to shopping list
-5. **Store**: Check off in app
-6. **Reset**: Confirm purchased quantity (e.g., 6 new packs)
-7. **Status**: Removed from shopping list, back to in-stock
+2. **Daily use**: Tap - button as you open packs
+3. **Alert trigger**: Quantity drops to 2 (≤ min threshold)
+4. **Auto-add**: "Size 1 Diapers" added to shopping list
+5. **At store**: Partner sees item on list
+6. **Check-off**: Partner checks item, enters "6 packs purchased"
+7. **Restock**: App updates inventory to 6, removes from shopping list
+8. **Real-time sync**: Your device shows updated inventory instantly
 
-## 🔄 Real-Time Sync
+### Example: Freezer Management
 
-Powered by Nostr relays:
-- Changes appear **instantly** on all devices
-- Works offline, syncs when online
-- Conflict resolution via addressable events
-- Replaceable events ensure only latest state
+1. **Quarter cow delivery**: Add "Ground Beef - 12 lbs", "Ribeye - 4 steaks"
+2. **Meal prep**: Use - button when you cook with items
+3. **Smart alerts**: Ground Beef hits 3 lbs (threshold: 4 lbs)
+4. **Grocery list**: Automatically adds "Ground Beef" with priority "High"
+5. **Check-off**: Buy ground beef, app updates inventory
+6. **Planning**: View freezer contents before shopping
 
-## 📊 Categories
+## 🔄 Real-Time Sync Details
 
-1. **Nursery** 🧸 - Baby supplies (diapers, wipes, formula)
-2. **Freezer** 🧊 - Frozen goods (meat, vegetables)
-3. **Fridge** 🥶 - Refrigerated items (milk, cheese)
-4. **Pantry** 🥫 - Dry goods (cereal, pasta)
-5. **Household** 🏠 - Non-food items (paper towels)
+### Powered by Nostr Relays
 
-## 🎬 Quick Start Guide
+When you update an item:
 
-### For New Users
+1. **Sign event** - Your Nostr identity signs the update
+2. **Publish to relays** - Broadcast to all configured relays
+3. **Relay validates** - Relays check event signature and schema
+4. **Subscriptions notify** - All connected devices receive update
+5. **UI updates** - Interface reflects changes instantly
 
-1. **Login or Sign Up**
-   - Use NIP-07 extension or create account
-   - Login with your Nostr credentials
+### Conflict Resolution
 
-2. **Add Your First Item**
-   - Click "Add Item" button
-   - Enter item details (name, quantity, threshold)
-   - Choose category (Nursery, Freezer, etc.)
-
-3. **Start Tracking**
-   - Use + and - buttons when you use or restock
-   - App automatically adds items to shopping list
-
-4. **Shop Smarter**
-   - Check shopping list when at store
-   - Check off items as you buy them
-   - App tracks what you still need
-
-### For Early Adopters
-
-This is a production-ready application built with:
-- TypeScript for type safety
-- React Testing Library for testing
-- TailwindCSS for consistent styling
-- shadcn/ui for accessible components
-- Nostr for decentralized sync
+- **Addressable events** - Same d-tag replaces previous version
+- **Last write wins** - Latest timestamp determines current state
+- **Offline support** - Changes queue when offline, sync when connected
 
 ## 🤝 Contributing
 
 Contributions welcome! Areas to contribute:
-- New category suggestions
+
+### Feature Requests
+- New category types (furniture, automotive, clothing)
 - Additional units of measurement
-- Dark mode improvements
+- Barcode scanner integration
+- Recipe integration with ingredients
+- Multi-language support
+
+### Design Improvements
+- Dark mode optimizations
 - Mobile PWA features
+- Custom themes and branding
+- Animation and micro-interactions
+- Accessibility enhancements
+
+### Technical Improvements
 - Export/import functionality
+- Backup and restore
+- Performance optimizations
+- Test coverage
+- Documentation
+
+### Getting Started
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Commit: `git commit -m 'Add amazing feature`
+5. Push: `git push origin feature/amazing-feature`
+6. Open a Pull Request
 
 ## 📄 License
 
@@ -296,32 +426,79 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
-Built with:
-- [Nostr Protocol](https://nostr.com/) for real-time sync
-- [React](https://reactjs.org/) for the UI
-- [shadcn/ui](https://ui.shadcn.com/) for accessible components
-- [TailwindCSS](https://tailwindcss.com/) for styling
-- [MKStack Template](https://gitlab.com/soapbox-pub/mkstack) for the foundation
+Built with love using:
 
-## 🔮 Future Features
+- **[Nostr Protocol](https://nostr.com/)** - Decentralized real-time communication
+- **[React](https://reactjs.org/)** - Modern UI framework
+- **[shadcn/ui](https://ui.shadcn.com/)** - Accessible, unstyled components
+- **[TailwindCSS](https://tailwindcss.com/)** - Utility-first CSS framework
+- **[MKStack Template](https://gitlab.com/soapbox-pub/mkstack)** - Nostr client foundation
 
-- [ ] Recipe integration with ingredient inventory
-- [ ] Barcode scanner for easy item addition
-- [ ] Photo storage for item identification
-- [ ] Share list with non-Nostr users
-- [ ] Price tracking and comparison
-- [ ] Meal planning based on inventory
-- [ ] Expiration date tracking
-- [ ] Location tracking (which freezer/room)
+### Design Inspiration
 
-## 📞 Support
+- **[Stripe](https://stripe.com/)** - Clean, professional design language
+- **[Linear](https://linear.app/)** - Fast, keyboard-first experience
+- **[Kits by Envato](https://kits.rometheme.net/)** - Modern card layouts and gradients
 
-For questions, issues, or feature requests:
-- Open an issue
-- Contact on Nostr
+## 🔮 Roadmap
+
+### Short-Term (v1.x)
+- ✅ Core inventory tracking
+- ✅ Real-time shopping list
+- ✅ Category management
+- ✅ Mobile optimization
+- 🔄 Dark mode improvements
+- 🔄 PWA app installation
+- 🔄 Export/import data
+
+### Medium-Term (v2.x)
+- 📅 Recipe integration
+- 📅 Barcode scanner
+- 📅 Photo storage
+- 📅 Multi-language support
+- 📅 Family sharing
+- 📅 Price tracking
+
+### Long-Term (v3.x)
+- ⏳ Furniture asset tracking
+- ⏳ Automotive parts catalog
+- ⏳ Tool and equipment management
+- ⏳ Clothing and wardrobe organization
+- ⏳ AI-powered shopping suggestions
+- ⏳ Integration with smart home systems
+
+## 📞 Support & Community
+
+### Documentation
+
+- **[README.md](./README.md)** - You are here!
+- **[NIP.md](./NIP.md)** - Custom Nostr protocol specification
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Production deployment guide
+
+### Getting Help
+
+- **Questions**: Open an issue on the project repository
+- **Bug Reports**: Include steps to reproduce, expected vs actual behavior
+- **Feature Requests**: Describe use case and value proposition
+- **Nostr**: Connect via your favorite Nostr client
+
+### Stay Updated
+
+- Watch the repository for releases and updates
+- Follow on Nostr for announcements and tips
+- Check documentation for breaking changes
+
+## ⚡ Quick Links
+
+- [Getting Started](#getting-started)
+- [Demo](https://stock-your-space.murdawkmedia.workers.dev) (Coming Soon)
+- [Changelog](./CHANGELOG.md) (Coming Soon)
+- [Contributing Guide](./CONTRIBUTING.md) (Coming Soon)
 
 ---
 
-**Made with ❤️ for busy parents who need one less thing to worry about.**
+**Made with ❤️ for organized homes everywhere.**
 
-*Never run out of diapers again.* 🚼
+*Stock Your Space. Know what you have. Know what you need. Keep your home perfectly stocked.* 🏠✨
+
+**Edit with Shakespeare**: [![Edit with Shakespeare](https://shakespeare.diy/badge.svg)](https://shakespeare.diy/clone?url=https%3A%2F%2Fgithub.com%2Fmurdawkmedia%2Finventory-tracker.git)

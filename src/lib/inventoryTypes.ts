@@ -22,7 +22,7 @@ export type Category = 'nursery' | 'freezer' | 'fridge' | 'pantry' | 'household'
 export const CATEGORIES: Category[] = ['nursery', 'freezer', 'fridge', 'pantry', 'household'];
 
 export const CATEGORY_LABELS: Record<Category, string> = {
-  nursery: '🧸 Nursery',
+  nursery: '👶 Nursery',
   freezer: '🧊 Freezer',
   fridge: '🥶 Fridge',
   pantry: '🥫 Pantry',
@@ -30,11 +30,11 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 };
 
 export const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
-  nursery: 'Baby supplies',
-  freezer: 'Frozen goods',
+  nursery: 'Baby & kids supplies',
+  freezer: 'Frozen goods & meat',
   fridge: 'Refrigerated items',
-  pantry: 'Dry goods',
-  household: 'Non-food items'
+  pantry: 'Dry goods & staples',
+  household: 'Household essentials'
 };
 
 export interface QuantityUpdate {

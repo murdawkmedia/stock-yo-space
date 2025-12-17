@@ -3,17 +3,16 @@ import { useSeoMeta } from '@unhead/react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Package, ShoppingCart, TrendingDown, Zap, Sparkles } from 'lucide-react';
+import { Package, ShoppingCart, TrendingDown, Zap, Sparkles, Home, Boxes, PackageOpen } from 'lucide-react';
 import { useInventory } from '@/hooks/useInventory';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const Index = () => {
   useSeoMeta({
-    title: 'Baby Stock - Smart Inventory & Shopping List',
-    description: 'Track baby supplies, manage freezer inventory, and never run out again with real-time sync.',
+    title: 'Stock Your Space - Smart Household Inventory Tracker',
+    description: 'Track everything in your home with real-time sync. From pantry staples to furniture assets, never lose track of what you own and need.',
   });
 
   const { user } = useCurrentUser();
@@ -25,166 +24,207 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950 dark:via-gray-900 dark:to-purple-950">
-      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+      {/* Background grid pattern */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+
+      <div className="relative max-w-7xl mx-auto px-4 py-12 sm:py-20">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-full">
-              <ShoppingCart className="h-8 w-8 text-primary" />
-            </div>
+        <div className="text-center mb-16">
+          <div className="inline-block p-4 bg-gradient-to-br from-primary to-indigo-600 rounded-2xl shadow-xl mb-6">
+            <Home className="h-12 w-12 text-white" />
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent mb-4">
-            Baby Stock
+          <h1 className="text-6xl sm:text-7xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent mb-6">
+            Stock Your Space
           </h1>
 
-          <p className="text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Smart inventory tracking for busy parents. Never run out of diapers, formula, or freezer staples again.
+          <p className="text-2xl sm:text-3xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mb-10 font-light">
+            Know what you have. Know what you need. Keep your home perfectly stocked.
           </p>
 
           {/* Most Important Action */}
-          <div className="mb-12">
-            <LoginArea className="mx-auto" />
-            <p className="text-sm text-muted-foreground mt-4">
-              Login or sign up to start tracking your inventory
+          <div className="mb-16">
+            <LoginArea className="mx-auto scale-125" />
+            <p className="text-sm text-slate-500 mt-4">
+              Login or create account to start managing your household inventory
             </p>
           </div>
         </div>
 
-        {/* App Preview */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-primary" />
-                🧸 The Baby Station
-              </CardTitle>
-              <CardDescription>
-                Quick-tap inventory for diapers, wipes, formula, and rash cream
-              </CardDescription>
+        {/* Value Propositions */}
+        <div className="grid lg:grid-cols-3 gap-8 mb-20">
+          <Card className="border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mb-3">
+                <Boxes className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-xl">Complete Home Tracker</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Quick + and - buttons for fast logging</p>
-                <p>✓ Automatic shopping list when items run low</p>
-                <p>✓ Track multiple diaper sizes</p>
+              <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                <p>✓ Kitchen, pantry, bathroom, garage, and more</p>
+                <p>✓ Baby supplies, food, household essentials</p>
+                <p>✓ Future: Furniture, automotive, and assets</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-amber-600" />
-                🧊 The Deep Freeze
-              </CardTitle>
-              <CardDescription>
-                Manage your quarter cow, frozen goods, and freezer inventory
-              </CardDescription>
+          <Card className="border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center mb-3">
+                <PackageOpen className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle className="text-xl">Smart Shopping</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Track steak cuts, ground beef, roasts separately</p>
-                <p>✓ Organize by freezer section</p>
-                <p>✓ Know what you have at a glance</p>
+              <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                <p>✓ Automatic shopping list generation</p>
+                <p>✓ Real-time sync across all devices</p>
+                <p>✓ Categories with priority-based sorting</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5 text-red-600" />
-                🛒 The Grocery Run
-              </CardTitle>
-              <CardDescription>
-                Real-time shopping list that syncs across all devices instantly
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Automatic alerts when items run low</p>
-                <p>✓ Live sync between devices</p>
-                <p>✓ Check off items in-store</p>
+          <Card className="border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center mb-3">
+                <Zap className="h-6 w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-green-600" />
-                ⚡️ Real-time Sync
-              </CardTitle>
-              <CardDescription>
-                Powered by Nostr for instant updates across all your devices
-              </CardDescription>
+              <CardTitle className="text-xl">Always in Sync</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>✓ Changes appear instantly on partner's device</p>
-                <p>✓ Decentralized and secure</p>
-                <p>✓ No central server required</p>
+              <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+                <p>✓ Powered by Nostr for instant updates</p>
+                <p>✓ Decentralized and secure by design</p>
+                <p>✓ Private - your data stays yours</p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Sample Data Section */}
-        <div className="mb-12">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="text-center mb-2">
-                <Sparkles className="h-5 w-5 inline mr-2 text-primary" />
-                How It Works
-              </CardTitle>
-              <CardDescription className="text-center">
-                Simple inventory tracking with automatic shopping list management
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-6">
-                <div className="text-center">
-                  <Badge variant="outline" className="mb-2">Step 1</Badge>
-                  <h3 className="font-medium mb-1">Add Your Items</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Set up inventory for diapers, formula, meats, frozen goods
-                  </p>
+        {/* Use Cases */}
+        <div className="mb-20">
+          <h2 className="text-3xl font-bold text-center mb-12 text-slate-900 dark:text-white">
+            One Tracker for Your Complete Household
+          </h2>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500/10 to-teal-600/10">
+              <CardHeader>
+                <CardTitle className="text-lg">Kitchen & Pantry</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                  <p>• Spices, oils, condiments</p>
+                  <p>• Cereal, pasta, canned goods</p>
+                  <p>• Coffee, tea, beverages</p>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="text-center">
-                  <Badge variant="outline" className="mb-2">Step 2</Badge>
-                  <h3 className="font-medium mb-1">Use And Tap</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Tap minus button when you take something. Tap plus when you restock.
-                  </p>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500/10 to-indigo-600/10">
+              <CardHeader>
+                <CardTitle className="text-lg">Nursery & Kids</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                  <p>• Diapers, wipes, formula</p>
+                  <p>• Baby food, rash cream</p>
+                  <p>• Toys, school supplies</p>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="text-center">
-                  <Badge variant="outline" className="mb-2">Step 3</Badge>
-                  <h3 className="font-medium mb-1">Shop Smart</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Items automatically appear on your shopping list when running low.
-                  </p>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-500/10 to-orange-600/10">
+              <CardHeader>
+                <CardTitle className="text-lg">Freezer & Fridge</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                  <p>• Meats, vegetables</p>
+                  <p>• Dairy, leftovers</p>
+                  <p>• Ice cream, frozen meals</p>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <div className="mt-8 text-center">
-                <LoginArea className="mx-auto" />
-              </div>
-
-              <div className="mt-6 text-xs text-muted-foreground text-center opacity-75">
-                Privacy-first design using Nostr protocol. Your data is yours alone.
-              </div>
-            </CardContent>
-          </Card>
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500/10 to-pink-600/10">
+              <CardHeader>
+                <CardTitle className="text-lg">Household & More</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                  <p>• Paper towels, cleaning supplies</p>
+                  <p>• Pet food, medicine</p>
+                  <p>• Future: Furniture, auto parts</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* How It Works */}
+        <Card className="border-0 shadow-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl max-w-4xl mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl mb-2">
+              <Sparkles className="h-6 w-6 inline mr-2 text-primary" />
+              How It Works
+            </CardTitle>
+            <CardDescription className="text-center text-lg">
+              Three simple steps to total home inventory control
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-8">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-white font-bold text-xl">1</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Add Your Items</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Create your inventory. Set categories, quantities, and minimum thresholds.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-white font-bold text-xl">2</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Track & Tally</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Use quick + and - buttons when you use or restock items. Easy one-tap logging.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <span className="text-white font-bold text-xl">3</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Shop Smarter</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Items auto-add to shopping list when low. Check off as you shop.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <LoginArea className="mx-auto" />
+            </div>
+
+            <div className="mt-8 text-xs text-slate-500 text-center opacity-75">
+              Privacy-first design using Nostr protocol. Your data belongs to you.
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
-        <div className="text-center mb-4">
-          <p className="text-sm text-muted-foreground">
-            Made with ❤️ for busy parents
+        <div className="text-center mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Built with ❤️ for organized homes everywhere
+          </p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+            Powered by Nostr • Real-time sync • Open source
           </p>
         </div>
       </div>

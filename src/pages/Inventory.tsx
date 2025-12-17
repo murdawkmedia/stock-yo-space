@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ShoppingCart, Package, TrendingDown } from 'lucide-react';
+import { Plus, ShoppingCart, Package, TrendingDown, Home } from 'lucide-react';
 
 import { useInventory } from '@/hooks/useInventory';
 import { CATEGORIES, CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from '@/lib/inventoryTypes';
@@ -14,7 +14,7 @@ import { QuickStats } from '@/components/inventory/QuickStats';
 export function Inventory() {
   const [activeTab, setActiveTab] = useState('inventory');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  
+
   const { items, shoppingListItems, loading } = useInventory();
 
   if (loading && items.length === 0) {
@@ -30,13 +30,20 @@ export function Inventory() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 pb-20">
       <div className="max-w-4xl mx-auto p-4">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Baby Stock</h1>
-          <p className="text-muted-foreground">
-            Track inventory, manage shopping lists, and never run out again
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-gradient-to-br from-primary to-indigo-600 rounded-lg shadow-lg">
+              <Home className="h-6 w-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent">
+              Stock Your Space
+            </h1>
+          </div>
+          <p className="text-lg text-muted-foreground">
+            Your complete household inventory tracker
           </p>
         </div>
 
