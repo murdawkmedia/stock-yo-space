@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, ShoppingCart, Package, TrendingDown, Home, Share2 } from 'lucide-react';
+import { Plus, ShoppingCart, Package, TrendingDown, Home, Share2, Settings } from 'lucide-react';
 
 import { useInventory } from '@/hooks/useInventory';
 import { useSharing } from '@/hooks/useSharing';
@@ -76,6 +76,14 @@ export function Inventory() {
                 </TabsList>
 
                 <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.location.href = '/settings'}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
                   <Button
                     onClick={() => setShareDialogOpen(true)}
                     variant="outline"
