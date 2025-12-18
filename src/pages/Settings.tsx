@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Wifi, History, Lock, Download, Upload } from 'lucide-react';
+import { Settings, Wifi, History, Lock, Download, Upload, ArrowLeft } from 'lucide-react';
 import { RelayListManager } from '@/components/RelayListManager';
 import { InventoryHistory } from '@/components/inventory/InventoryHistory';
 import { EncryptedItemsManager } from '@/components/inventory/EncryptedItemsManager';
@@ -15,6 +17,17 @@ export function Settings() {
       <div className="max-w-5xl mx-auto p-4">
         {/* Header */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="mb-4"
+          >
+            <Link to="/inventory" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Inventory
+            </Link>
+          </Button>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 bg-gradient-to-br from-primary to-indigo-600 rounded-lg shadow-lg">
               <Settings className="h-6 w-6 text-white" />

@@ -11,7 +11,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface ShareInventoryModalProps {
   open: boolean;
-  onOpen-Change: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
 }
 
 interface UserShareRowProps {

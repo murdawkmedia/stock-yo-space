@@ -82,9 +82,8 @@ export function Inventory() {
                     size="sm"
                     asChild
                     className="px-2 sm:px-3 hidden sm:flex"
-                    title="Settings"
                   >
-                    <Link to="/settings">
+                    <Link to="/settings" className="flex items-center" title="Settings">
                       <Settings className="h-4 w-4" />
                       <span className="sm:ml-2">Settings</span>
                     </Link>
