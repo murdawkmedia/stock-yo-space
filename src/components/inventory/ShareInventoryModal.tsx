@@ -3,14 +3,53 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSharing } from '@/hooks/useSharing';
+import { useAuthor } from '@/hooks/useAuthor';
 import { Share2, UserPlus, Trash2, Users, Copy, Check } from 'lucide-react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 interface ShareInventoryModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpen-Change: (open: boolean) => void;
 }
+
+interface UserShareRowProps {
+  pubkey: string;
+  onRemove?: (pubkey: string) => void;
+  isRemoving?: boolean;
+  canRemove?: boolean;
+}
+
+function UserShareRow({ pubkey, onRemove, isRemoving, canRemove }: UserShareRowProps) {
+  const author = useAuthor(pubkey);
+  const metadata = author.data?.metadata;
+  const displayName = metadata?.name || pubkey.slice(0, 12);
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={metadata?.picture} alt={displayName} />
+          <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm font-medium">{displayName}</span>
+      </div>
+      {canRemove && onRemove && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove(pubkey)}
+          disabled={isRemoving}
+          className="h-8 w-8 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 
 export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalProps) {
   const { user } = useCurrentUser();
@@ -118,23 +157,13 @@ export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalP
               </Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {sharedUsers.map((share) => (
-                  <div
+                  <UserShareRow
                     key={share.pubkey}
-                    className="flex items-center justify-between rounded-lg border px-3 py-2"
-                  >
-                    <span className="text-sm font-mono truncate">
-                      {share.npub?.slice(0, 16)}...
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeSharedUser(share.pubkey)}
-                      disabled={isRemovingUser}
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                    pubkey={share.pubkey}
+                    onRemove={removeSharedUser}
+                    isRemoving={isRemovingUser}
+                    canRemove
+                  />
                 ))}
               </div>
             </div>
@@ -149,14 +178,7 @@ export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalP
               </Label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {sharedWithMe.map((share) => (
-                  <div
-                    key={share.pubkey}
-                    className="flex items-center rounded-lg border bg-muted/30 px-3 py-2"
-                  >
-                    <span className="text-sm font-mono truncate">
-                      {share.npub?.slice(0, 16)}...
-                    </span>
-                  </div>
+                  <UserShareRow key={share.pubkey} pubkey={share.pubkey} />
                 ))}
               </div>
             </div>

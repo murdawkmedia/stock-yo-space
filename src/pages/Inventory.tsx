@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link } from 'react-router-dom';
 import { Plus, ShoppingCart, Package, TrendingDown, Home, Share2, Settings } from 'lucide-react';
 
 import { useInventory } from '@/hooks/useInventory';
@@ -75,32 +76,36 @@ export function Inventory() {
                   </TabsTrigger>
                 </TabsList>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => window.location.href = '/settings'}
+                    asChild
+                    className="px-2 sm:px-3 hidden sm:flex"
+                    title="Settings"
                   >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    <Link to="/settings">
+                      <Settings className="h-4 w-4" />
+                      <span className="sm:ml-2">Settings</span>
+                    </Link>
                   </Button>
                   <Button
                     onClick={() => setShareDialogOpen(true)}
                     variant="outline"
                     size="sm"
-                    className="relative"
+                    className="relative flex-1 sm:flex-none"
                   >
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
+                    <Share2 className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Share</span>
                     {sharedWithMe.length > 0 && (
                       <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs font-medium bg-green-500 text-white rounded-full">
                         {sharedWithMe.length}
                       </span>
                     )}
                   </Button>
-                  <Button onClick={() => setAddDialogOpen(true)} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
+                  <Button onClick={() => setAddDialogOpen(true)} size="sm" className="flex-1 sm:flex-none">
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Add Item</span>
                   </Button>
                 </div>
               </div>

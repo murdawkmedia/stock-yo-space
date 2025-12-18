@@ -5,8 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { useInventory } from '@/hooks/useInventory';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useAuthor } from '@/hooks/useAuthor';
 import { cn } from '@/lib/utils';
 import type { InventoryItem } from '@/lib/inventoryTypes';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,13 +27,19 @@ interface InventoryItemRowProps {
 }
 
 export function InventoryItemRow({ item }: InventoryItemRowProps) {
+  const { user } = useCurrentUser();
   const { updateQuantity, deleteItem } = useInventory();
+  const author = useAuthor(item.author_pubkey);
   const [isDecrementing, setIsDecrementing] = useState(false);
   const [isIncrementing, setIsIncrementing] = useState(false);
   const [quantityInput, setQuantityInput] = useState(String(item.quantity));
 
+  const isOwnItem = user?.pubkey === item.author_pubkey;
   const isLowStock = item.quantity <= item.min_threshold;
   const isOutOfStock = item.quantity === 0;
+
+  const ownerMetadata = author.data?.metadata;
+  const ownerName = ownerMetadata?.name || item.author_pubkey.slice(0, 8);
 
   const handleQuickAdd = async (delta: number) => {
     const newQuantity = Math.max(0, item.quantity + delta);
@@ -103,6 +112,15 @@ export function InventoryItemRow({ item }: InventoryItemRowProps) {
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-medium truncate">{item.name}</h3>
             {stockStatusBadge()}
+            {!isOwnItem && (
+              <div className="flex items-center gap-1">
+                <Avatar className="h-4 w-4">
+                  <AvatarImage src={ownerMetadata?.picture} alt={ownerName} />
+                  <AvatarFallback className="text-[8px]">{ownerName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <span className="text-xs text-muted-foreground">{ownerName}</span>
+              </div>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             Stock up at: {item.min_threshold} {item.unit} • Priority: {item.priority}
@@ -111,71 +129,79 @@ export function InventoryItemRow({ item }: InventoryItemRowProps) {
 
         {/* Quantity Controls */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickAdd(-1)}
-              disabled={isDecrementing || isIncrementing || item.quantity === 0}
-              className="h-8 w-8 p-0"
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
+          {isOwnItem ? (
+            <>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleQuickAdd(-1)}
+                  disabled={isDecrementing || isIncrementing || item.quantity === 0}
+                  className="h-8 w-8 p-0"
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
 
-            <div className="min-w-[60px] text-center">
-              <Input
-                type="number"
-                value={quantityInput}
-                onChange={(e) => setQuantityInput(e.target.value)}
-                onBlur={(e) => handleQuantityInputChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleQuantityInputChange(e.currentTarget.value);
-                  }
-                }}
-                className="h-8 text-center px-2"
-                min="0"
-                disabled={isDecrementing || isIncrementing}
-              />
+                <div className="min-w-[60px] text-center">
+                  <Input
+                    type="number"
+                    value={quantityInput}
+                    onChange={(e) => setQuantityInput(e.target.value)}
+                    onBlur={(e) => handleQuantityInputChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleQuantityInputChange(e.currentTarget.value);
+                      }
+                    }}
+                    className="h-8 text-center px-2"
+                    min="0"
+                    disabled={isDecrementing || isIncrementing}
+                  />
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleQuickAdd(1)}
+                  disabled={isDecrementing || isIncrementing}
+                  className="h-8 w-8 p-0"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+
+              <span className="text-sm text-muted-foreground min-w-[40px] text-right">
+                {item.unit}
+              </span>
+
+              {/* Delete Button */}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{item.name}" from your inventory?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              {item.quantity} {item.unit} (view only)
             </div>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleQuickAdd(1)}
-              disabled={isDecrementing || isIncrementing}
-              className="h-8 w-8 p-0"
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </div>
-
-          <span className="text-sm text-muted-foreground min-w-[40px] text-right">
-            {item.unit}
-          </span>
-
-          {/* Delete Button */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive">
-                <Trash2 className="h-3 w-3" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete "{item.name}" from your inventory?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          )}
         </div>
       </div>
     </Card>

@@ -57,18 +57,20 @@ export function useInventory() {
   const queryClient = useQueryClient();
   const { sharedWithMe } = useSharing();
 
-  // Get all author pubkeys to query (user + people sharing with them)
+  // Get all author pubkeys to query (user's own items + items from people sharing with user)
   const authorPubkeys = user
     ? [user.pubkey, ...sharedWithMe.map(s => s.pubkey)]
     : [];
 
-  // Query: Get all inventory items (own + shared)
+  // Query: Get all inventory items (own + shared with me)
   const { data: items = [], isLoading: loading, error } = useQuery({
-    queryKey: ['inventory', user?.pubkey, authorPubkeys.length],
+    queryKey: ['inventory', user?.pubkey, sharedWithMe.length],
     queryFn: async (c) => {
-      if (!user || authorPubkeys.length === 0) return [];
+      if (!user) return [];
 
       const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
+
+      // Query for my own items + items from people who shared with me
       const events = await nostr.query([
         {
           kinds: [INVENTORY_KIND],
@@ -79,7 +81,7 @@ export function useInventory() {
 
       return events.map(eventToInventoryItem);
     },
-    enabled: !!user && authorPubkeys.length > 0
+    enabled: !!user
   });
 
   // Mutation: Add or update inventory item
@@ -114,6 +116,12 @@ export function useInventory() {
       if (!user) throw new Error('Must be logged in');
 
       const { item, newQuantity } = update;
+
+      // Only allow editing own items
+      if (item.author_pubkey !== user.pubkey) {
+        throw new Error('You can only edit your own items');
+      }
+
       let on_shopping_list = item.on_shopping_list;
 
       // Auto-add to shopping list if quantity drops below threshold
@@ -160,6 +168,11 @@ export function useInventory() {
     }) => {
       if (!user) throw new Error('Must be logged in');
 
+      // Only allow editing own items
+      if (item.author_pubkey !== user.pubkey) {
+        throw new Error('You can only edit your own items');
+      }
+
       const updatedItem = {
         ...item,
         on_shopping_list: onShoppingList,
@@ -187,6 +200,12 @@ export function useInventory() {
   const deleteItem = useMutation({
     mutationFn: async (itemId: string) => {
       if (!user) throw new Error('Must be logged in');
+
+      // Find the item to check ownership
+      const item = items.find(i => i.id === itemId);
+      if (item && item.author_pubkey !== user.pubkey) {
+        throw new Error('You can only delete your own items');
+      }
 
       // Delete by setting quantity to 0 and on_shopping_list to false
       // Nostr doesn't support deletion, so we mark as inactive
