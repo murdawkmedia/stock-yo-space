@@ -5,12 +5,51 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Wifi, History, Lock, Download, Upload, ArrowLeft } from 'lucide-react';
 import { RelayListManager } from '@/components/RelayListManager';
-import { InventoryHistory } from '@/components/inventory/InventoryHistory';
-import { EncryptedItemsManager } from '@/components/inventory/EncryptedItemsManager';
-import { ExportImport } from '@/components/inventory/ExportImport';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { LoginArea } from '@/components/auth/LoginArea';
+
+// Lazy load heavy components
+const InventoryHistory = React.lazy(() => import('@/components/inventory/InventoryHistory').then(m => ({ default: m.InventoryHistory })));
+const EncryptedItemsManager = React.lazy(() => import('@/components/inventory/EncryptedItemsManager').then(m => ({ default: m.EncryptedItemsManager })));
+const ExportImport = React.lazy(() => import('@/components/inventory/ExportImport').then(m => ({ default: m.ExportImport })));
 
 export function Settings() {
+  const { user } = useCurrentUser();
   const [activeTab, setActiveTab] = useState('relays');
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 pb-20">
+        <div className="max-w-5xl mx-auto p-4">
+          <div className="mb-8">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="mb-4"
+            >
+              <Link to="/inventory" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Inventory
+              </Link>
+            </Button>
+          </div>
+          <Card className="border-0 shadow-xl">
+            <CardContent className="py-12 px-8 text-center">
+              <div className="max-w-sm mx-auto space-y-6">
+                <Settings className="h-12 w-12 mx-auto text-muted-foreground" />
+                <h2 className="text-2xl font-bold">Login Required</h2>
+                <p className="text-muted-foreground">
+                  Please log in to access settings and manage your inventory.
+                </p>
+                <LoginArea className="max-w-60 mx-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 pb-20">
@@ -98,7 +137,9 @@ export function Settings() {
                       used, restocked, or added to your shopping list.
                     </p>
                   </div>
-                  <InventoryHistory />
+                  <React.Suspense fallback={<div className="text-center py-8 text-muted-foreground">Loading history...</div>}>
+                    <InventoryHistory />
+                  </React.Suspense>
                 </div>
               </TabsContent>
 
@@ -113,7 +154,9 @@ export function Settings() {
                       Perfect for sensitive inventory like medications or valuables.
                     </p>
                   </div>
-                  <EncryptedItemsManager />
+                  <React.Suspense fallback={<div className="text-center py-8 text-muted-foreground">Loading encryption settings...</div>}>
+                    <EncryptedItemsManager />
+                  </React.Suspense>
                 </div>
               </TabsContent>
 
@@ -127,7 +170,9 @@ export function Settings() {
                       Your data is always portable - you own it.
                     </p>
                   </div>
-                  <ExportImport />
+                  <React.Suspense fallback={<div className="text-center py-8 text-muted-foreground">Loading backup options...</div>}>
+                    <ExportImport />
+                  </React.Suspense>
                 </div>
               </TabsContent>
             </CardContent>
