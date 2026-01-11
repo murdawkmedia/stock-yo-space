@@ -1,4 +1,4 @@
-# Stock Your Space - Decentralized Inventory Tracker
+# Stock Yo Space - Decentralized Inventory Tracker
 
 **A private-first, offline-capable inventory management system powered by the Nostr protocol.**
 

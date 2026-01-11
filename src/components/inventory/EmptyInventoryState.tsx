@@ -17,7 +17,7 @@ export function EmptyInventoryState({ onAddItem }: EmptyInventoryStateProps) {
 
         <div className="space-y-2 max-w-md">
           <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent">
-            Welcome to Stock Your Space!
+            Welcome to Stock Yo Space!
           </h3>
           <p className="text-muted-foreground">
             Your inventory is currently empty. Start by adding your first item to keep track of your household essentials.

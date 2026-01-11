@@ -16,7 +16,7 @@ export default defineConfig(() => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Stock Your Space',
+        name: 'Stock Yo Space',
         short_name: 'StockYourSpace',
         description: 'Decentralized Household Inventory Tracker',
         theme_color: '#ffffff',

@@ -33,7 +33,7 @@ const Index = () => {
           </div>
 
           <h1 className="text-6xl sm:text-7xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent mb-6">
-            Stock Your Space
+            Stock Yo Space
           </h1>
 
           <p className="text-2xl sm:text-3xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto mb-10 font-light">
