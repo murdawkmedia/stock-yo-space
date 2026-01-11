@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +16,9 @@ const Index = () => {
   const { user } = useCurrentUser();
   const { items, shoppingListItems, lowStockItems } = useInventory();
 
-  // If user is logged in, redirect to inventory
-  if (user) {
-    return <Navigate to="/inventory" replace />;
-  }
+  // if (user) {
+  //   return <Navigate to="/inventory" replace />;
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
@@ -85,10 +84,30 @@ const Index = () => {
 
           {/* Most Important Action */}
           <div className="mb-16">
-            <LoginArea className="mx-auto scale-125" />
-            <p className="text-sm text-slate-500 mt-4">
-              Login or create account to start managing your household inventory
-            </p>
+            {user ? (
+              <div className="space-y-4">
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-full px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all scale-110 hover:scale-115 bg-gradient-to-r from-primary to-indigo-600"
+                >
+                  <Link to="/inventory">
+                    Go to Dashboard
+                    <Package className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+                <p className="text-sm text-slate-500">
+                  Welcome back! You are logged in.
+                </p>
+              </div>
+            ) : (
+              <>
+                <LoginArea className="mx-auto scale-125" />
+                <p className="text-sm text-slate-500 mt-4">
+                  Login or create account to start managing your household inventory
+                </p>
+              </>
+            )}
           </div>
         </div>
 
