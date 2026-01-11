@@ -46,8 +46,8 @@ This application is built on the principles of **sovereignty** and **decentraliz
 ### Quick Start
 1.  **Clone the repo**
     ```bash
-    git clone https://github.com/murdawkmedia/inventory-tracker.git
-    cd inventory-tracker
+    git clone https://github.com/murdawkmedia/stock-yo-space.git
+    cd stock-yo-space
     ```
 
 2.  **Install dependencies**
