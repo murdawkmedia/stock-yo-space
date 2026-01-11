@@ -11,6 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // If I can't check, I'll comment out the plugin usage if it's not critical. 
 // But UnheadProvider is critical.
 
+import { HelmetProvider } from 'react-helmet-async';
 import { NDKProvider } from '@/contexts/NDKContext';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -60,16 +61,18 @@ export function App() {
   return (
     // <UnheadProvider head={head}>
     <AppProvider storageKey="nostr:app-config" defaultConfig={defaultConfig}>
-      <QueryClientProvider client={queryClient}>
-        <NDKProvider relays={relayUrls}>
-          <TooltipProvider>
-            <Toaster />
-            <Suspense>
-              <AppRouter />
-            </Suspense>
-          </TooltipProvider>
-        </NDKProvider>
-      </QueryClientProvider>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <NDKProvider relays={relayUrls}>
+            <TooltipProvider>
+              <Toaster />
+              <Suspense>
+                <AppRouter />
+              </Suspense>
+            </TooltipProvider>
+          </NDKProvider>
+        </QueryClientProvider>
+      </HelmetProvider>
     </AppProvider>
     // </UnheadProvider>
   );

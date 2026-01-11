@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,48 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
+      <Helmet>
+        <title>Stock Yo Space - Smart Home Inventory Tracker</title>
+        <meta name="description" content="Decentralized, private-first inventory management for your home. Track pantry, freezer, and household items with real-time sync." />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.stockyospace.com/" />
+        <meta property="og:title" content="Stock Yo Space - Smart Inventory" />
+        <meta property="og:description" content="Secure, offline-first home inventory tracking powered by Nostr." />
+        <meta property="og:image" content="https://www.stockyospace.com/pwa-512x512.png" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:url" content="https://www.stockyospace.com/" />
+        <meta property="twitter:title" content="Stock Yo Space" />
+        <meta property="twitter:description" content="Secure, offline-first home inventory tracking powered by Nostr." />
+        <meta property="twitter:image" content="https://www.stockyospace.com/pwa-512x512.png" />
+
+        {/* LD-JSON (AEO - Answer Engine Optimization) */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "Stock Yo Space",
+            "operatingSystem": "Web",
+            "applicationCategory": "ProductivityApplication",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "A decentralized, privacy-focused home inventory tracker that works offline and syncs via Nostr relays.",
+            "featureList": "Inventory Tracking, Shopping List, Offline Mode, E2E Encryption",
+            "author": {
+              "@type": "Organization",
+              "name": "Murdawk Media",
+              "url": "https://murdawkmedia.com"
+            }
+          })}
+        </script>
+      </Helmet>
+
       {/* Background grid pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
 
