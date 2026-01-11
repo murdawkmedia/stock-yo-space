@@ -45,10 +45,6 @@ const defaultConfig: AppConfig = {
       { url: 'wss://relay.damus.io', read: true, write: true },
       { url: 'wss://nos.lol', read: true, write: true },
       { url: 'wss://relay.nostr.band', read: true, write: true },
-      { url: 'wss://purplepag.es', read: true, write: true }, // Good for NIP-05
-      { url: 'wss://relay.snort.social', read: true, write: true },
-      { url: 'wss://relay.nostr.bg', read: true, write: true },
-      { url: 'wss://relay.nb.tg', read: true, write: true }, // Alby
     ],
     updatedAt: 0,
   },

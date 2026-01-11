@@ -44,7 +44,7 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
       // But re-connecting is safer than re-instantiating.
 
       try {
-        await ndkInstance.connect();
+        await ndkInstance.connect(2000); // 2s timeout for initial connection attempt
       } catch (err) {
         console.error('Failed to connect to NDK relays:', err);
       } finally {

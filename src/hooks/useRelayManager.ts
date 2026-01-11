@@ -47,12 +47,21 @@ export function useRelayManager() {
 
           // Simple length check + one value check to avoid deep recursion if not needed
           // We rely on the dependency array to prevent loops (removing 'relays' from deps)
-          const isDifferent = true; // Always update if we fetched data and it's login time.
-          // Actually, let's keep a sanity check to avoid toast spam if user re-mounts component
-          const currentUrls = new Set(relays.map(r => r.url));
-          const hasChanges = fetchedRelays.some(r => !currentUrls.has(r.url)) || fetchedRelays.length !== relays.length;
+          // Deep comparison of relays
+          const areRelaysEqual = (a: Relay[], b: Relay[]) => {
+            if (a.length !== b.length) return false;
+            // Sort by URL to ensure order doesn't matter
+            const sortedA = [...a].sort((x, y) => x.url.localeCompare(y.url));
+            const sortedB = [...b].sort((x, y) => x.url.localeCompare(y.url));
 
-          if (fetchedRelays.length > 0 && hasChanges) {
+            return sortedA.every((r, i) =>
+              r.url === sortedB[i].url &&
+              r.read === sortedB[i].read &&
+              r.write === sortedB[i].write
+            );
+          };
+
+          if (!areRelaysEqual(fetchedRelays, relays)) {
             updateConfig(current => ({
               ...current,
               relayMetadata: {
