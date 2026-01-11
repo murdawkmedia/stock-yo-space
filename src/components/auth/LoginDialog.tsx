@@ -5,7 +5,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Shield, Upload, AlertTriangle, UserPlus, KeyRound, Sparkles, Cloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLoginActions } from '@/hooks/useLoginActions';
@@ -185,10 +185,11 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin, onS
         className={cn("max-w-[95vw] sm:max-w-md max-h-[90vh] max-h-[90dvh] p-0 overflow-hidden rounded-2xl overflow-y-scroll")}
       >
         <DialogHeader className={cn('px-6 pt-6 pb-1 relative')}>
+          <DialogTitle className="sr-only">Sign In</DialogTitle>
 
-            <DialogDescription className="text-center">
-              Sign up or log in to continue
-            </DialogDescription>
+          <DialogDescription className="text-center">
+            Sign up or log in to continue
+          </DialogDescription>
         </DialogHeader>
         <div className='px-6 pt-2 pb-4 space-y-4 overflow-y-auto flex-1'>
           {/* Prominent Sign Up Section */}
@@ -279,9 +280,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin, onS
                       setNsec(e.target.value);
                       if (errors.nsec) setErrors(prev => ({ ...prev, nsec: undefined }));
                     }}
-                    className={`rounded-lg ${
-                      errors.nsec ? 'border-red-500 focus-visible:ring-red-500' : ''
-                    }`}
+                    className={`rounded-lg ${errors.nsec ? 'border-red-500 focus-visible:ring-red-500' : ''
+                      }`}
                     placeholder='nsec1...'
                     autoComplete="off"
                   />
@@ -345,9 +345,8 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin, onS
                     setBunkerUri(e.target.value);
                     if (errors.bunker) setErrors(prev => ({ ...prev, bunker: undefined }));
                   }}
-                  className={`rounded-lg border-gray-300 dark:border-gray-700 focus-visible:ring-primary ${
-                    errors.bunker ? 'border-red-500' : ''
-                  }`}
+                  className={`rounded-lg border-gray-300 dark:border-gray-700 focus-visible:ring-primary ${errors.bunker ? 'border-red-500' : ''
+                    }`}
                   placeholder='bunker://'
                   autoComplete="off"
                 />
@@ -370,7 +369,7 @@ const LoginDialog: React.FC<LoginDialogProps> = ({ isOpen, onClose, onLogin, onS
         </div>
       </DialogContent>
     </Dialog>
-    );
-  };
+  );
+};
 
 export default LoginDialog;
