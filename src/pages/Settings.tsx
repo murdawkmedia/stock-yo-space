@@ -60,14 +60,14 @@ export function Settings() {
               Back to Inventory
             </Link>
           </Button>
-          <div className="flex items-center gap-3 mb-2">
+          <Link to="/" className="flex items-center gap-3 mb-2 hover:opacity-80 transition-opacity w-fit">
             <div className="p-2 bg-gradient-to-br from-primary to-indigo-600 rounded-lg shadow-lg">
               <Settings className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent">
               Settings
             </h1>
-          </div>
+          </Link>
           <p className="text-lg text-muted-foreground">
             Manage your relays, view history, and configure privacy options
           </p>
