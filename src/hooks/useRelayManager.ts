@@ -45,7 +45,14 @@ export function useRelayManager() {
               };
             });
 
-          if (fetchedRelays.length > 0) {
+          // Simple length check + one value check to avoid deep recursion if not needed
+          // We rely on the dependency array to prevent loops (removing 'relays' from deps)
+          const isDifferent = true; // Always update if we fetched data and it's login time.
+          // Actually, let's keep a sanity check to avoid toast spam if user re-mounts component
+          const currentUrls = new Set(relays.map(r => r.url));
+          const hasChanges = fetchedRelays.some(r => !currentUrls.has(r.url)) || fetchedRelays.length !== relays.length;
+
+          if (fetchedRelays.length > 0 && hasChanges) {
             updateConfig(current => ({
               ...current,
               relayMetadata: {
@@ -66,7 +73,7 @@ export function useRelayManager() {
 
     syncUserRelays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.pubkey, ndk]); // Only run when user changes
+  }, [user?.pubkey, ndk]); // Only run when user changes (login/logout). DO NOT add 'relays' here.
 
   const publishNIP65RelayList = (relayList: Relay[]) => {
     const tags = relayList.map(relay => {
