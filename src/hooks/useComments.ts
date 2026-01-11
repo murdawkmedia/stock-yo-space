@@ -1,14 +1,17 @@
 import { NKinds, NostrEvent, NostrFilter } from '@nostrify/nostrify';
-import { useNostr } from '@nostrify/react';
+import { useNDK } from '@/contexts/NDKContext';
 import { useQuery } from '@tanstack/react-query';
+import { NDKEvent, NDKKind, NDKFilter } from '@nostr-dev-kit/ndk';
 
 export function useComments(root: NostrEvent | URL, limit?: number) {
-  const { nostr } = useNostr();
+  const { ndk } = useNDK();
 
   return useQuery({
     queryKey: ['nostr', 'comments', root instanceof URL ? root.toString() : root.id, limit],
     queryFn: async (c) => {
-      const filter: NostrFilter = { kinds: [1111] };
+      if (!ndk) return { allComments: [], topLevelComments: [], getDescendants: () => [], getDirectReplies: () => [] };
+
+      const filter: NDKFilter = { kinds: [1111 as NDKKind] };
 
       if (root instanceof URL) {
         filter['#I'] = [root.toString()];
@@ -25,9 +28,19 @@ export function useComments(root: NostrEvent | URL, limit?: number) {
         filter.limit = limit;
       }
 
-      // Query for all kind 1111 comments that reference this addressable event regardless of depth
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
-      const events = await nostr.query([filter], { signal });
+      // Query for all kind 1111 comments
+      const ndkEvents = await ndk.fetchEvents(filter);
+      const events = Array.from(ndkEvents).map(e => {
+        return {
+          id: e.id,
+          pubkey: e.pubkey,
+          created_at: e.created_at!,
+          kind: e.kind!,
+          tags: e.tags,
+          content: e.content,
+          sig: e.sig!,
+        } as NostrEvent;
+      });
 
       // Helper function to get tag value
       const getTagValue = (event: NostrEvent, tagName: string): string | undefined => {
@@ -57,7 +70,7 @@ export function useComments(root: NostrEvent | URL, limit?: number) {
         });
 
         const allDescendants = [...directReplies];
-        
+
         // Recursively get descendants of each direct reply
         for (const reply of directReplies) {
           allDescendants.push(...getDescendants(reply.id));
@@ -93,6 +106,6 @@ export function useComments(root: NostrEvent | URL, limit?: number) {
         }
       };
     },
-    enabled: !!root,
+    enabled: !!root && !!ndk,
   });
 }

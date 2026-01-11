@@ -31,7 +31,7 @@ export function NostrSync() {
           const event = eventArray[0];
 
           // Only update if the event is newer than our stored data
-          if (event.created_at > config.relayMetadata.updatedAt) {
+          if (event.created_at && event.created_at > config.relayMetadata.updatedAt) {
             const fetchedRelays = event.tags
               .filter(([name]) => name === 'r')
               .map(([_, url, marker]) => ({
@@ -46,7 +46,7 @@ export function NostrSync() {
                 ...current,
                 relayMetadata: {
                   relays: fetchedRelays,
-                  updatedAt: event.created_at,
+                  updatedAt: event.created_at || Math.floor(Date.now() / 1000),
                 },
               }));
             }

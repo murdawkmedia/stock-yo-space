@@ -52,7 +52,7 @@ export function useLoggedInAccounts() {
   return {
     authors: currentUser ? [currentUser] : [],
     currentUser,
-    otherUsers: [],
+    otherUsers: [] as Account[],
     setLogin,
     removeLogin,
   };

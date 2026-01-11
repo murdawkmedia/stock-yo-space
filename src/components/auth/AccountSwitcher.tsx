@@ -74,7 +74,7 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
           <span>Add another account</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => removeLogin(currentUser.id)}
+          onClick={() => removeLogin()}
           className='flex items-center gap-2 cursor-pointer p-2 rounded-md text-red-500'
         >
           <LogOut className='w-4 h-4' />

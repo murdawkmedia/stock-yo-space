@@ -9,8 +9,9 @@ import { nip57 } from 'nostr-tools';
 import type { Event } from 'nostr-tools';
 import type { WebLNProvider } from '@webbtc/webln-types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNostr } from '@nostrify/react';
+import { useNDK } from '@/contexts/NDKContext';
 import type { NostrEvent } from '@nostrify/nostrify';
+import { NDKKind, NDKFilter } from '@nostr-dev-kit/ndk';
 
 export function useZaps(
   target: Event | Event[],
@@ -18,7 +19,7 @@ export function useZaps(
   _nwcConnection: NWCConnection | null,
   onZapSuccess?: () => void
 ) {
-  const { nostr } = useNostr();
+  const { ndk } = useNDK();
   const { toast } = useToast();
   const { user } = useCurrentUser();
   const { config } = useAppContext();
@@ -48,29 +49,32 @@ export function useZaps(
       return query.getObserversCount() > 0 ? 60000 : false;
     },
     queryFn: async (c) => {
-      if (!actualTarget) return [];
-
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(5000)]);
+      if (!actualTarget || !ndk) return [];
 
       // Query for zap receipts for this specific event
+      let filter: NDKFilter = { kinds: [9735 as NDKKind] };
+
       if (actualTarget.kind >= 30000 && actualTarget.kind < 40000) {
         // Addressable event
         const identifier = actualTarget.tags.find((t) => t[0] === 'd')?.[1] || '';
-        const events = await nostr.query([{
-          kinds: [9735],
-          '#a': [`${actualTarget.kind}:${actualTarget.pubkey}:${identifier}`],
-        }], { signal });
-        return events;
+        filter['#a'] = [`${actualTarget.kind}:${actualTarget.pubkey}:${identifier}`];
       } else {
         // Regular event
-        const events = await nostr.query([{
-          kinds: [9735],
-          '#e': [actualTarget.id],
-        }], { signal });
-        return events;
+        filter['#e'] = [actualTarget.id];
       }
+
+      const ndkEvents = await ndk.fetchEvents(filter);
+      return Array.from(ndkEvents).map(e => ({
+        id: e.id,
+        pubkey: e.pubkey,
+        created_at: e.created_at!,
+        kind: e.kind!,
+        tags: e.tags,
+        content: e.content,
+        sig: e.sig!,
+      } as NostrEvent));
     },
-    enabled: !!actualTarget?.id,
+    enabled: !!actualTarget?.id && !!ndk,
   });
 
   // Process zap events into simple counts and totals
@@ -159,7 +163,7 @@ export function useZaps(
     }
 
     try {
-      if (!author.data || !author.data?.metadata || !author.data?.event ) {
+      if (!author.data || !author.data?.metadata || !author.data?.event) {
         toast({
           title: 'Author not found',
           description: 'Could not find the author of this item.',
@@ -203,11 +207,11 @@ export function useZaps(
 
       const zapRequest = nip57.makeZapRequest({
         profile: actualTarget.pubkey,
-        event: event,
+        event: event as any,
         amount: zapAmount,
         relays: config.relayMetadata.relays.map(r => r.url),
         comment
-      });
+      } as any);
 
       // Sign the zap request (but don't publish to relays - only send to LNURL endpoint)
       if (!user.signer) {
@@ -217,110 +221,111 @@ export function useZaps(
 
       try {
         const res = await fetch(`${zapEndpoint}?amount=${zapAmount}&nostr=${encodeURI(JSON.stringify(signedZapRequest))}`);
-            const responseData = await res.json();
+        const responseData = await res.json();
 
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${responseData.reason || 'Unknown error'}`);
-            }
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${responseData.reason || 'Unknown error'}`);
+        }
 
-            const newInvoice = responseData.pr;
-            if (!newInvoice || typeof newInvoice !== 'string') {
-              throw new Error('Lightning service did not return a valid invoice');
-            }
+        const newInvoice = responseData.pr;
+        if (!newInvoice || typeof newInvoice !== 'string') {
+          throw new Error('Lightning service did not return a valid invoice');
+        }
 
-            // Get the current active NWC connection dynamically
-            const currentNWCConnection = getActiveConnection();
+        // Get the current active NWC connection dynamically
+        const currentNWCConnection = getActiveConnection();
 
-            // Try NWC first if available and properly connected
-            if (currentNWCConnection && currentNWCConnection.connectionString && currentNWCConnection.isConnected) {
-              try {
-                await sendPayment(currentNWCConnection, newInvoice);
+        // Try NWC first if available and properly connected
+        if (currentNWCConnection && currentNWCConnection.connectionString && currentNWCConnection.isConnected) {
+          try {
+            await sendPayment(currentNWCConnection, newInvoice);
 
-                // Clear states immediately on success
-                setIsZapping(false);
-                setInvoice(null);
+            // Clear states immediately on success
+            setIsZapping(false);
+            setInvoice(null);
 
-                toast({
-                  title: 'Zap successful!',
-                  description: `You sent ${amount} sats via NWC to the author.`,
-                });
-
-                // Invalidate zap queries to refresh counts
-                queryClient.invalidateQueries({ queryKey: ['zaps'] });
-
-                // Close dialog last to ensure clean state
-                onZapSuccess?.();
-                return;
-              } catch (nwcError) {
-                console.error('NWC payment failed, falling back:', nwcError);
-
-                // Show specific NWC error to user for debugging
-                const errorMessage = nwcError instanceof Error ? nwcError.message : 'Unknown NWC error';
-                toast({
-                  title: 'NWC payment failed',
-                  description: `${errorMessage}. Falling back to other payment methods...`,
-                  variant: 'destructive',
-                });
-              }
-            }
-
-            if (webln) {  // Try WebLN next
-              try {
-                // For native WebLN, we may need to enable it first
-                let webLnProvider = webln;
-                if (webln.enable && typeof webln.enable === 'function') {
-                  const enabledProvider = await webln.enable();
-                  // Some implementations return the provider, others return void
-                  // Cast to WebLNProvider to handle both cases
-                  const provider = enabledProvider as WebLNProvider | undefined;
-                  if (provider) {
-                    webLnProvider = provider;
-                  }
-                }
-
-                await webLnProvider.sendPayment(newInvoice);
-
-                // Clear states immediately on success
-                setIsZapping(false);
-                setInvoice(null);
-
-                toast({
-                  title: 'Zap successful!',
-                  description: `You sent ${amount} sats to the author.`,
-                });
-
-                // Invalidate zap queries to refresh counts
-                queryClient.invalidateQueries({ queryKey: ['zaps'] });
-
-                // Close dialog last to ensure clean state
-                onZapSuccess?.();
-              } catch (weblnError) {
-                console.error('WebLN payment failed, falling back:', weblnError);
-
-                // Show specific WebLN error to user for debugging
-                const errorMessage = weblnError instanceof Error ? weblnError.message : 'Unknown WebLN error';
-                toast({
-                  title: 'WebLN payment failed',
-                  description: `${errorMessage}. Falling back to other payment methods...`,
-                  variant: 'destructive',
-                });
-
-                setInvoice(newInvoice);
-                setIsZapping(false);
-              }
-            } else { // Default - show QR code and manual Lightning URI
-              setInvoice(newInvoice);
-              setIsZapping(false);
-            }
-          } catch (err) {
-            console.error('Zap error:', err);
             toast({
-              title: 'Zap failed',
-              description: (err as Error).message,
+              title: 'Zap successful!',
+              description: `You sent ${amount} sats via NWC to the author.`,
+            });
+
+            // Invalidate zap queries to refresh counts
+            queryClient.invalidateQueries({ queryKey: ['zaps'] });
+
+            // Close dialog last to ensure clean state
+            onZapSuccess?.();
+            return;
+          } catch (nwcError) {
+            console.error('NWC payment failed, falling back:', nwcError);
+
+            // Show specific NWC error to user for debugging
+            const errorMessage = nwcError instanceof Error ? nwcError.message : 'Unknown NWC error';
+            toast({
+              title: 'NWC payment failed',
+              description: `${errorMessage}. Falling back to other payment methods...`,
               variant: 'destructive',
             });
+          }
+        }
+
+        if (webln) {  // Try WebLN next
+          try {
+            // For native WebLN, we may need to enable it first
+            let webLnProvider = webln;
+            if (webln.enable && typeof webln.enable === 'function') {
+              const enabledProvider = await webln.enable();
+              // Some implementations return the provider, others return void
+              // Cast to WebLNProvider to handle both cases
+              const provider = enabledProvider as WebLNProvider | undefined;
+              if (provider) {
+                webLnProvider = provider;
+              }
+            }
+
+            await webLnProvider.sendPayment(newInvoice);
+
+            // Clear states immediately on success
+            setIsZapping(false);
+            setInvoice(null);
+
+            toast({
+              title: 'Zap successful!',
+              description: `You sent ${amount} sats to the author.`,
+            });
+
+            // Invalidate zap queries to refresh counts
+            queryClient.invalidateQueries({ queryKey: ['zaps'] });
+
+            // Close dialog last to ensure clean state
+            onZapSuccess?.();
+          } catch (weblnError) {
+            console.error('WebLN payment failed, falling back:', weblnError);
+
+            // Show specific WebLN error to user for debugging
+            const errorMessage = weblnError instanceof Error ? weblnError.message : 'Unknown WebLN error';
+            toast({
+              title: 'WebLN payment failed',
+              description: `${errorMessage}. Falling back to other payment methods...`,
+              variant: 'destructive',
+            });
+
+            setInvoice(newInvoice);
             setIsZapping(false);
           }
+        } else { // Default - show QR code and manual Lightning URI
+          setInvoice(newInvoice);
+          setIsZapping(false);
+        }
+      } catch (err) {
+        console.error('Zap error:', err);
+        toast({
+          title: 'Zap failed',
+          description: (err as Error).message,
+          variant: 'destructive',
+          duration: 5000,
+        });
+        setIsZapping(false);
+      }
     } catch (err) {
       console.error('Zap error:', err);
       toast({

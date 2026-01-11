@@ -13,6 +13,7 @@ export function useNostrPublish(): UseMutationResult<NDKEvent, Error, Partial<No
       }
 
       const event = new NDKEvent(ndk);
+      if (t.kind === undefined) throw new Error("Kind is required");
       event.kind = t.kind;
       event.content = t.content || "";
       event.tags = t.tags || [];

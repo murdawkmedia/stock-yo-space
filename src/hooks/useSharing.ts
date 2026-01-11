@@ -62,7 +62,7 @@ export function useSharing() {
           shares.push({
             pubkey: tag[1],
             npub: hexToNpub(tag[1]),
-            addedAt: event.created_at
+            addedAt: event.created_at || Math.floor(Date.now() / 1000)
           });
         }
       }

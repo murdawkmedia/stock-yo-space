@@ -9,7 +9,7 @@ export function useCurrentUser() {
 
   return {
     user: currentUser,
-    // If consumers destructured metadata directly from the hook return, we need to spread it
+    metadata: currentUser?.metadata,
     ...(currentUser?.metadata || {}),
   };
 }

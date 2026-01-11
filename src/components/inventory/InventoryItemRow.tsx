@@ -39,7 +39,7 @@ export function InventoryItemRow({ item }: InventoryItemRowProps) {
   const isOutOfStock = item.quantity === 0;
 
   const ownerMetadata = author.data?.metadata;
-  const ownerName = ownerMetadata?.name || item.author_pubkey.slice(0, 8);
+  const ownerName = ownerMetadata?.name || (item.author_pubkey ? item.author_pubkey.slice(0, 8) : 'Unknown');
 
   const handleQuickAdd = async (delta: number) => {
     const newQuantity = Math.max(0, item.quantity + delta);
