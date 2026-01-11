@@ -1,55 +1,58 @@
-import { useNostr } from '@nostrify/react';
-import { useNostrLogin } from '@nostrify/react/login';
-import { useQuery } from '@tanstack/react-query';
-import { NSchema as n, NostrEvent, NostrMetadata } from '@nostrify/nostrify';
+import { useNDK } from '@/contexts/NDKContext';
+import { NDKUser } from '@nostr-dev-kit/ndk';
 
+// Keeping the interface compatible with consumers if possible, 
+// or simplifying it if consumers are easily updated.
 export interface Account {
-  id: string;
+  id: string; // pubkey
   pubkey: string;
-  event?: NostrEvent;
-  metadata: NostrMetadata;
+  metadata: Record<string, any>;
+  signer?: any; // NDKSigner or similar, strictly NDKSigner but consumers might expect other.
+  // We'll pass ndk.signer here
+
+  // event?: NostrEvent; // Removed raw event dependency for now
 }
 
 export function useLoggedInAccounts() {
-  const { nostr } = useNostr();
-  const { logins, setLogin, removeLogin } = useNostrLogin();
+  const { activeUser, loginWithExtension, loginWithPrivateKey, logout } = useNDK();
 
-  const { data: authors = [] } = useQuery({
-    queryKey: ['nostr', 'logins', logins.map((l) => l.id).join(';')],
-    queryFn: async ({ signal }) => {
-      const events = await nostr.query(
-        [{ kinds: [0], authors: logins.map((l) => l.pubkey) }],
-        { signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]) },
-      );
+  // Compat for LoginDialog
+  // LoginDialog sends: { type: 'nsec' | 'extension' | 'bunker', sk?: string, uri?: string }
+  const setLogin = async (login: any) => {
+    try {
+      if (login.type === 'extension') {
+        await loginWithExtension();
+      } else if (login.type === 'nsec' && login.sk) {
+        await loginWithPrivateKey(login.sk);
+      } else {
+        console.error('Unsupported NDK login type:', login.type);
+      }
+    } catch (e) {
+      console.error('Login failed:', e);
+      throw e;
+    }
+  };
 
-      return logins.map(({ id, pubkey }): Account => {
-        const event = events.find((e) => e.pubkey === pubkey);
-        try {
-          const metadata = n.json().pipe(n.metadata()).parse(event?.content);
-          return { id, pubkey, metadata, event };
-        } catch {
-          return { id, pubkey, metadata: {}, event };
-        }
-      });
-    },
-    retry: 3,
-  });
+  const removeLogin = () => {
+    logout();
+  };
 
-  // Current user is the first login
-  const currentUser: Account | undefined = (() => {
-    const login = logins[0];
-    if (!login) return undefined;
-    const author = authors.find((a) => a.id === login.id);
-    return { metadata: {}, ...author, id: login.id, pubkey: login.pubkey };
-  })();
-
-  // Other users are all logins except the current one
-  const otherUsers = (authors || []).slice(1) as Account[];
+  // Convert NDKUser to "Account" shape
+  let currentUser: Account | undefined = undefined;
+  if (activeUser) {
+    currentUser = {
+      id: activeUser.pubkey,
+      pubkey: activeUser.pubkey,
+      metadata: activeUser.profile || {},
+      signer: activeUser.ndk?.signer
+    };
+    // Trigger profile fetch if empty? NDKContext does this nicely.
+  }
 
   return {
-    authors,
+    authors: currentUser ? [currentUser] : [],
     currentUser,
-    otherUsers,
+    otherUsers: [],
     setLogin,
     removeLogin,
   };

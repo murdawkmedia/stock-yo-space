@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNostr } from '@nostrify/react';
+import { useNDK } from '@/contexts/NDKContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppContext } from '@/hooks/useAppContext';
 
@@ -11,7 +11,7 @@ import { useAppContext } from '@/hooks/useAppContext';
  * - NIP-65 relay list (kind 10002)
  */
 export function NostrSync() {
-  const { nostr } = useNostr();
+  const { ndk } = useNDK(); // useNostr replacement
   const { user } = useCurrentUser();
   const { config, updateConfig } = useAppContext();
 
@@ -20,13 +20,15 @@ export function NostrSync() {
 
     const syncRelaysFromNostr = async () => {
       try {
-        const events = await nostr.query(
-          [{ kinds: [10002], authors: [user.pubkey], limit: 1 }],
-          { signal: AbortSignal.timeout(5000) }
-        );
+        if (!ndk) return;
+        const events = await ndk.fetchEvents({
+          kinds: [10002], authors: [user.pubkey], limit: 1
+        });
 
-        if (events.length > 0) {
-          const event = events[0];
+        const eventArray = Array.from(events);
+
+        if (eventArray.length > 0) {
+          const event = eventArray[0];
 
           // Only update if the event is newer than our stored data
           if (event.created_at > config.relayMetadata.updatedAt) {
@@ -56,7 +58,7 @@ export function NostrSync() {
     };
 
     syncRelaysFromNostr();
-  }, [user, config.relayMetadata.updatedAt, nostr, updateConfig]);
+  }, [user, config.relayMetadata.updatedAt, ndk, updateConfig]);
 
   return null;
 }

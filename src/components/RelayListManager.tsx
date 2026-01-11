@@ -1,34 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Plus, X, Wifi, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useAppContext } from '@/hooks/useAppContext';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useNostrPublish } from '@/hooks/useNostrPublish';
 import { useToast } from '@/hooks/useToast';
-
-interface Relay {
-  url: string;
-  read: boolean;
-  write: boolean;
-}
+import { useRelayManager } from '@/hooks/useRelayManager';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 export function RelayListManager() {
-  const { config, updateConfig } = useAppContext();
+  const { relays, addRelay, removeRelay, toggleRead, toggleWrite } = useRelayManager();
   const { user } = useCurrentUser();
-  const { mutate: publishEvent } = useNostrPublish();
   const { toast } = useToast();
 
-  const [relays, setRelays] = useState<Relay[]>(config.relayMetadata.relays);
   const [newRelayUrl, setNewRelayUrl] = useState('');
-
-  // Sync local state with config when it changes (e.g., from NostrProvider sync)
-  useEffect(() => {
-    setRelays(config.relayMetadata.relays);
-  }, [config.relayMetadata.relays]);
 
   const normalizeRelayUrl = (url: string): string => {
     url = url.trim();
@@ -77,89 +63,8 @@ export function RelayListManager() {
       return;
     }
 
-    const newRelays = [...relays, { url: normalized, read: true, write: true }];
-    setRelays(newRelays);
+    addRelay(normalized);
     setNewRelayUrl('');
-
-    saveRelays(newRelays);
-  };
-
-  const handleRemoveRelay = (url: string) => {
-    const newRelays = relays.filter(r => r.url !== url);
-    setRelays(newRelays);
-    saveRelays(newRelays);
-  };
-
-  const handleToggleRead = (url: string) => {
-    const newRelays = relays.map(r =>
-      r.url === url ? { ...r, read: !r.read } : r
-    );
-    setRelays(newRelays);
-    saveRelays(newRelays);
-  };
-
-  const handleToggleWrite = (url: string) => {
-    const newRelays = relays.map(r =>
-      r.url === url ? { ...r, write: !r.write } : r
-    );
-    setRelays(newRelays);
-    saveRelays(newRelays);
-  };
-
-  const saveRelays = (newRelays: Relay[]) => {
-    const now = Math.floor(Date.now() / 1000);
-
-    // Update local config
-    updateConfig((current) => ({
-      ...current,
-      relayMetadata: {
-        relays: newRelays,
-        updatedAt: now,
-      },
-    }));
-
-    // Publish to Nostr if user is logged in
-    if (user) {
-      publishNIP65RelayList(newRelays);
-    }
-  };
-
-  const publishNIP65RelayList = (relayList: Relay[]) => {
-    const tags = relayList.map(relay => {
-      if (relay.read && relay.write) {
-        return ['r', relay.url];
-      } else if (relay.read) {
-        return ['r', relay.url, 'read'];
-      } else if (relay.write) {
-        return ['r', relay.url, 'write'];
-      }
-      // If neither read nor write, don't include (shouldn't happen)
-      return null;
-    }).filter((tag): tag is string[] => tag !== null);
-
-    publishEvent(
-      {
-        kind: 10002,
-        content: '',
-        tags,
-      },
-      {
-        onSuccess: () => {
-          toast({
-            title: 'Relay list published',
-            description: 'Your relay list has been published to Nostr.',
-          });
-        },
-        onError: (error) => {
-          console.error('Failed to publish relay list:', error);
-          toast({
-            title: 'Failed to publish relay list',
-            description: 'There was an error publishing your relay list to Nostr.',
-            variant: 'destructive',
-          });
-        },
-      }
-    );
   };
 
   const renderRelayUrl = (url: string): string => {
@@ -213,7 +118,7 @@ export function RelayListManager() {
                     <Switch
                       id={`read-${relay.url}`}
                       checked={relay.read}
-                      onCheckedChange={() => handleToggleRead(relay.url)}
+                      onCheckedChange={() => toggleRead(relay.url)}
                       className="data-[state=checked]:bg-green-500 scale-75"
                     />
                   </div>
@@ -224,7 +129,7 @@ export function RelayListManager() {
                     <Switch
                       id={`write-${relay.url}`}
                       checked={relay.write}
-                      onCheckedChange={() => handleToggleWrite(relay.url)}
+                      onCheckedChange={() => toggleWrite(relay.url)}
                       className="data-[state=checked]:bg-blue-500 scale-75"
                     />
                   </div>
@@ -236,7 +141,7 @@ export function RelayListManager() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleRemoveRelay(relay.url)}
+              onClick={() => removeRelay(relay.url)}
               className="size-5 text-muted-foreground hover:text-destructive hover:bg-transparent shrink-0"
               disabled={relays.length <= 1}
             >
@@ -278,7 +183,7 @@ export function RelayListManager() {
 
       {!user && (
         <p className="text-xs text-muted-foreground">
-          Log in to sync your relay list with Nostr
+          Note: Changes are saved locally. Log in to sync with Nostr network.
         </p>
       )}
     </div>

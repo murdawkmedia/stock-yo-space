@@ -1,264 +1,169 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNostr } from '@nostrify/react';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useToast } from '@/hooks/useToast';
-import { useSharing } from '@/hooks/useSharing';
-import { useState, useCallback } from 'react';
-import type { InventoryItem, QuantityUpdate } from '@/lib/inventoryTypes';
+import { useNDK } from '@/contexts/NDKContext';
+import { useInventoryKey } from './useInventoryKey';
+import { InventoryItem } from '@/types/inventory';
+import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
+import { v4 as uuidv4 } from 'uuid';
+import { encryptInventoryData, decryptInventoryData } from '@/lib/encryption';
+import { useCallback } from 'react';
 
-const INVENTORY_KIND = 35871;
+const INVENTORY_KIND = 35871 as NDKKind;
 
-// Helper to convert Nostr event to InventoryItem
-function eventToInventoryItem(event: any): InventoryItem {
-  const tags = event.tags.reduce((acc: any, tag: any[]) => {
-    acc[tag[0]] = tag[1];
-    return acc;
-  }, {});
-
-  return {
-    id: tags.d,
-    name: tags.name,
-    category: tags.category || 'pantry',
-    quantity: parseInt(tags.quantity || '0'),
-    min_threshold: parseInt(tags.min_threshold || '1'),
-    unit: tags.unit || 'units',
-    on_shopping_list: tags.on_shopping_list === 'true',
-    priority: (tags.priority as 'low' | 'medium' | 'high') || 'medium',
-    created_at: event.created_at,
-    event_id: event.id,
-    author_pubkey: event.pubkey
-  };
-}
-
-// Helper to convert InventoryItem to Nostr event
-function inventoryItemToEvent(item: Partial<InventoryItem>, pubkey: string) {
-  return {
-    kind: INVENTORY_KIND,
-    content: '',
-    tags: [
-      ['d', item.id!],
-      ['name', item.name!],
-      ['category', item.category || 'pantry'],
-      ['quantity', String(item.quantity || 0)],
-      ['min_threshold', String(item.min_threshold || 1)],
-      ['unit', item.unit || 'units'],
-      ['on_shopping_list', item.on_shopping_list ? 'true' : 'false'],
-      ['priority', item.priority || 'medium']
-    ],
-    created_at: Math.floor(Date.now() / 1000),
-    pubkey
-  };
-}
+import { useSharing } from './useSharing';
 
 export function useInventory() {
-  const { nostr } = useNostr();
-  const { user } = useCurrentUser();
-  const { toast } = useToast();
+  const { ndk, activeUser } = useNDK();
+  const { sharedKey } = useInventoryKey();
   const queryClient = useQueryClient();
-  const { sharedWithMe } = useSharing();
+  const { allAuthorPubkeys } = useSharing();
 
-  // Get all author pubkeys to query (user's own items + items from people sharing with user)
-  const authorPubkeys = user
-    ? [user.pubkey, ...sharedWithMe.map(s => s.pubkey)]
-    : [];
+  const { data: items = [], isLoading: loading } = useQuery({
+    queryKey: ['inventory', activeUser?.pubkey, sharedKey ? 'encrypted' : 'plaintext'],
+    queryFn: async () => {
+      if (!ndk || !activeUser) return [];
 
-  // Query: Get all inventory items (own + shared with me)
-  const { data: items = [], isLoading: loading, error } = useQuery({
-    queryKey: ['inventory', user?.pubkey, sharedWithMe.length],
-    queryFn: async (c) => {
-      if (!user) return [];
+      const events = await ndk.fetchEvents({
+        kinds: [INVENTORY_KIND],
+        authors: allAuthorPubkeys,
+        limit: 200
+      });
 
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-
-      // Query for my own items + items from people who shared with me
-      const events = await nostr.query([
-        {
-          kinds: [INVENTORY_KIND],
-          authors: authorPubkeys,
-          limit: 200
+      const loadedItems: InventoryItem[] = [];
+      for (const event of events) {
+        try {
+          const item = await eventToInventoryItem(event, sharedKey || null);
+          if (item) loadedItems.push(item);
+        } catch (e) {
+          console.warn('Failed to parse item:', e);
         }
-      ], { signal });
-
-      return events.map(eventToInventoryItem);
-    },
-    enabled: !!user
-  });
-
-  // Mutation: Add or update inventory item
-  const addItemMutation = useMutation({
-    mutationFn: async (item: Partial<InventoryItem>) => {
-      if (!user) throw new Error('Must be logged in');
-
-      const event = await user.signer.signEvent(inventoryItemToEvent(item, user.pubkey));
-      await nostr.event(event);
-
-      return item as InventoryItem;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      toast({
-        title: 'Item saved',
-        description: 'Your inventory item has been updated'
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Error saving item',
-        description: error.message,
-        variant: 'destructive'
-      });
-    }
-  });
-
-  // Mutation: Update quantity (with shopping list logic)
-  const updateQuantity = useMutation({
-    mutationFn: async (update: QuantityUpdate) => {
-      if (!user) throw new Error('Must be logged in');
-
-      const { item, newQuantity } = update;
-
-      // Only allow editing own items
-      if (item.author_pubkey !== user.pubkey) {
-        throw new Error('You can only edit your own items');
       }
+      return loadedItems;
+    },
+    enabled: !!ndk && !!activeUser
+  });
 
+  const publishItem = async (item: InventoryItem) => {
+    if (!ndk || !activeUser) throw new Error('Not logged in');
+
+    const event = new NDKEvent(ndk);
+    event.kind = INVENTORY_KIND;
+    event.created_at = Math.floor(Date.now() / 1000);
+
+    const contentObj = { ...item };
+    // Clean up fields that might be redundant if we want
+
+    const dTag = item.id;
+
+    if (sharedKey) {
+      const encrypted = await encryptInventoryData(JSON.stringify(contentObj), sharedKey);
+      event.content = encrypted;
+      event.tags = [['d', dTag], ['s', 'encrypted']];
+    } else {
+      event.content = JSON.stringify(contentObj);
+      event.tags = [['d', dTag]];
+    }
+
+    await event.publish();
+    return item;
+  };
+
+  const addItem = useMutation({
+    mutationFn: async (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'updatedBy'>) => {
+      const uuid = uuidv4();
+      const newItem: InventoryItem = {
+        ...item,
+        id: uuid,
+        created_at: Math.floor(Date.now() / 1000),
+        author_pubkey: activeUser!.pubkey
+      };
+      return publishItem(newItem);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] })
+  });
+
+  const updateItem = useMutation({
+    mutationFn: async (item: InventoryItem) => publishItem(item),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] })
+  });
+
+  const deleteItem = useMutation({
+    mutationFn: async (itemId: string) => {
+      if (!ndk || !activeUser) throw new Error('Not logged in');
+      const event = await ndk.fetchEvent({
+        kinds: [INVENTORY_KIND],
+        '#d': [itemId],
+        authors: [activeUser.pubkey]
+      });
+      if (event) await event.delete();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] })
+  });
+
+  // Helpers
+  const updateQuantity = useMutation({
+    mutationFn: async ({ item, newQuantity }: { item: InventoryItem, newQuantity: number }) => {
       let on_shopping_list = item.on_shopping_list;
-
-      // Auto-add to shopping list if quantity drops below threshold
       if (newQuantity <= item.min_threshold) {
         on_shopping_list = true;
       }
-
-      const updatedItem = {
-        ...item,
-        quantity: newQuantity,
-        on_shopping_list
-      };
-
-      const event = await user.signer.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
-      await nostr.event(event);
-
-      return { updatedItem, update };
+      const updated = { ...item, quantity: newQuantity, on_shopping_list };
+      return publishItem(updated);
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-
-      const { updatedItem, update } = data;
-
-      if (updatedItem.on_shopping_list && update.newQuantity <= updatedItem.min_threshold) {
-        toast({
-          title: 'Added to shopping list',
-          description: `${updatedItem.name} is running low and has been added to your shopping list`
-        });
-      } else {
-        toast({
-          title: 'Quantity updated',
-          description: `${updatedItem.name} updated to ${updatedItem.quantity} ${updatedItem.unit}`
-        });
-      }
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] })
   });
 
-  // Mutation: Update shopping list status
   const updateShoppingList = useMutation({
-    mutationFn: async ({ item, onShoppingList, purchased }: {
-      item: InventoryItem;
-      onShoppingList: boolean;
-      purchased?: number;
-    }) => {
-      if (!user) throw new Error('Must be logged in');
-
-      // Only allow editing own items
-      if (item.author_pubkey !== user.pubkey) {
-        throw new Error('You can only edit your own items');
-      }
-
-      const updatedItem = {
+    mutationFn: async ({ item, onShoppingList, purchased }: { item: InventoryItem, onShoppingList: boolean, purchased?: number }) => {
+      const updated = {
         ...item,
         on_shopping_list: onShoppingList,
         quantity: purchased !== undefined ? purchased : item.quantity
       };
-
-      const event = await user.signer.signEvent(inventoryItemToEvent(updatedItem, user.pubkey));
-      await nostr.event(event);
-
-      return updatedItem;
+      return publishItem(updated);
     },
-    onSuccess: (updatedItem) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-
-      if (!updatedItem.on_shopping_list && updatedItem.quantity > updatedItem.min_threshold) {
-        toast({
-          title: 'Restocked',
-          description: `${updatedItem.name} has been restocked to ${updatedItem.quantity} ${updatedItem.unit}`
-        });
-      }
-    }
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['inventory'] })
   });
 
-  // Mutation: Delete item
-  const deleteItem = useMutation({
-    mutationFn: async (itemId: string) => {
-      if (!user) throw new Error('Must be logged in');
-
-      // Find the item to check ownership
-      const item = items.find(i => i.id === itemId);
-      if (item && item.author_pubkey !== user.pubkey) {
-        throw new Error('You can only delete your own items');
-      }
-
-      // Delete by setting quantity to 0 and on_shopping_list to false
-      // Nostr doesn't support deletion, so we mark as inactive
-      const deletionEvent = {
-        kind: INVENTORY_KIND,
-        content: '',
-        tags: [
-          ['d', itemId],
-          ['name', 'DELETED'],
-          ['quantity', '0'],
-          ['on_shopping_list', 'false']
-        ],
-        created_at: Math.floor(Date.now() / 1000),
-        pubkey: user.pubkey
-      };
-
-      const event = await user.signer.signEvent(deletionEvent as any);
-      await nostr.event(event);
-
-      return itemId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      toast({
-        title: 'Item deleted',
-        description: 'The item has been removed from your inventory'
-      });
-    }
-  });
-
-  // Helper: Get items by category
   const getItemsByCategory = useCallback((category: string) => {
     return items.filter(item => item.category === category);
   }, [items]);
 
-  // Helper: Get shopping list items
   const shoppingListItems = items.filter(item => item.on_shopping_list);
-
-  // Helper: Get low stock items
-  const lowStockItems = items.filter(item =>
-    item.quantity <= item.min_threshold && !item.on_shopping_list
-  );
+  const lowStockItems = items.filter(i => i.quantity <= i.min_threshold && !i.on_shopping_list);
 
   return {
     items,
     shoppingListItems,
     lowStockItems,
     loading,
-    error,
-    addItem: addItemMutation.mutateAsync,
+    addItem: addItem.mutateAsync,
+    updateItem: updateItem.mutateAsync,
+    deleteItem: deleteItem.mutateAsync,
     updateQuantity: updateQuantity.mutateAsync,
     updateShoppingList: updateShoppingList.mutateAsync,
-    deleteItem: deleteItem.mutateAsync,
     getItemsByCategory
   };
+}
+
+async function eventToInventoryItem(event: NDKEvent, sharedKey: Uint8Array | null): Promise<InventoryItem | null> {
+  try {
+    let content = event.content;
+    let parsed;
+    if (content.startsWith('ivt1-') && sharedKey) {
+      const decrypted = await decryptInventoryData(content, sharedKey);
+      if (!decrypted) return null;
+      parsed = JSON.parse(decrypted);
+    } else {
+      try {
+        parsed = JSON.parse(content);
+      } catch { return null; }
+    }
+    return { ...parsed, id: getDTag(event) || parsed.id };
+  } catch {
+    return null;
+  }
+}
+
+function getDTag(event: NDKEvent): string | undefined {
+  return event.tags.find(t => t[0] === 'd')?.[1];
 }

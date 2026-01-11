@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSeoMeta } from '@unhead/react';
+
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,7 @@ import { LoginArea } from '@/components/auth/LoginArea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
 const Index = () => {
-  useSeoMeta({
-    title: 'Stock Your Space - Smart Household Inventory Tracker',
-    description: 'Track everything in your home with real-time sync. From pantry staples to furniture assets, never lose track of what you own and need.',
-  });
+
 
   const { user } = useCurrentUser();
   const { items, shoppingListItems, lowStockItems } = useInventory();

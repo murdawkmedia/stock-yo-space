@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, TrendingUp, TrendingDown, Plus, Minus, Edit, Trash2, PackageCheck } from 'lucide-react';
-import { useNostr } from '@nostrify/react';
+import { useNDK } from '@/contexts/NDKContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { type InventoryItem } from '@/lib/inventoryTypes';
 import { formatDistanceToNow } from 'date-fns';
@@ -23,7 +23,7 @@ interface HistoryGroup {
 }
 
 export function InventoryHistory() {
-  const { nostr } = useNostr();
+  const { ndk } = useNDK();
   const { user } = useCurrentUser();
   const [timeFilter, setTimeFilter] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -45,20 +45,19 @@ export function InventoryHistory() {
     queryFn: async (c) => {
       if (!user) return [];
 
-      const timeThreshold = getTimeThreshold();
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(1500)]);
-      
-      const inventoryEvents = await nostr.query([
-        { 
-          kinds: [35871], 
-          authors: [user.pubkey],
-          since: timeThreshold,
-          limit: 500
-        }
-      ], { signal });
+      if (!ndk) return [];
 
-      // Convert to InventoryEvents
-      return inventoryEvents.map(event => {
+      const timeThreshold = getTimeThreshold();
+
+      const inventoryEvents = await ndk.fetchEvents({
+        kinds: [35871],
+        authors: [user.pubkey],
+        since: timeThreshold,
+        limit: 500
+      });
+
+      // Convert Set to Array
+      return Array.from(inventoryEvents).map(event => {
         const tags = event.tags.reduce((acc: any, tag: string[]) => {
           acc[tag[0]] = tag[1];
           return acc;
@@ -99,10 +98,10 @@ export function InventoryHistory() {
     itemsMap.forEach((itemEvents, itemId) => {
       // Sort by date
       const sorted = itemEvents.sort((a, b) => b.created_at - a.created_at);
-      
+
       // Mark first event as created
       sorted[sorted.length - 1].action = 'created';
-      
+
       // Compare sequential events for changes
       for (let i = 0; i < sorted.length - 1; i++) {
         const current = sorted[i];
@@ -126,14 +125,14 @@ export function InventoryHistory() {
 
     // Sort by date and return
     return changes.sort((a, b) => b.created_at - a.created_at)
-                  .filter(e => categoryFilter === 'all' || e.category === categoryFilter);
+      .filter(e => categoryFilter === 'all' || e.category === categoryFilter);
 
   }, [events, categoryFilter]);
 
   // Group by date
   const groupedHistory = useMemo(() => {
     const groups: HistoryGroup[] = [];
-    
+
     changes.forEach(change => {
       const date = new Date(change.created_at * 1000);
       const today = new Date();
@@ -146,10 +145,10 @@ export function InventoryHistory() {
       } else if (date.toDateString() === yesterday.toDateString()) {
         dateLabel = 'Yesterday';
       } else {
-        dateLabel = date.toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
-          day: 'numeric' 
+        dateLabel = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
         });
       }
 
@@ -169,7 +168,7 @@ export function InventoryHistory() {
       case 'created':
         return <Plus className="h-3 w-3 text-green-600" />;
       case 'updated':
-        return event.quantity > event.min_threshold ? 
+        return event.quantity > event.min_threshold ?
           <TrendingUp className="h-3 w-3 text-blue-600" /> :
           <TrendingDown className="h-3 w-3 text-amber-600" />;
       case 'deleted':
@@ -202,13 +201,13 @@ export function InventoryHistory() {
     if (event.action === 'created') {
       return `${event.quantity} ${event.unit}`;
     }
-    
+
     // Find previous value for context
     const previous = events.find(e => e.event_id === event.event_id);
     if (previous) {
       return `${event.quantity} ${event.unit}`;
     }
-    
+
     return 'Updated';
   };
 
@@ -284,7 +283,7 @@ export function InventoryHistory() {
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
               {group.date}
             </h3>
-            
+
             <div className="space-y-3">
               {group.items.map(event => (
                 <Card key={event.event_id} className="border-0 bg-card/50 transition-all hover:shadow-sm">
@@ -293,7 +292,7 @@ export function InventoryHistory() {
                       <div className="mt-1">
                         {getActionIcon(event)}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium truncate">{event.name}</span>
@@ -301,7 +300,7 @@ export function InventoryHistory() {
                             {event.category}
                           </Badge>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <span className="font-medium text-slate-600 dark:text-slate-400">
                             {getActionText(event)}

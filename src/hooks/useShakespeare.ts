@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCurrentUser } from './useCurrentUser';
-import type { NUser } from '@nostrify/react/login';
+import { useNDK } from '@/contexts/NDKContext';
+import { NDKEvent, NDKUser } from '@nostr-dev-kit/ndk';
 
 // Types for Shakespeare API (compatible with OpenAI ChatCompletionMessageParam)
 export interface ChatMessage {
@@ -65,10 +66,10 @@ const SHAKESPEARE_API_URL = 'https://ai.shakespeare.diy/v1';
 async function createNIP98Token(
   method: string,
   url: string,
-  body?: unknown,
-  user?: NUser
+  ndk: any,
+  body?: unknown
 ): Promise<string> {
-  if (!user?.signer) {
+  if (!ndk?.signer) {
     throw new Error('User signer is required for NIP-98 authentication');
   }
 
@@ -91,15 +92,17 @@ async function createNIP98Token(
   }
 
   // Create the HTTP request event
-  const event = await user.signer.signEvent({
-    kind: 27235, // NIP-98 HTTP Auth
-    content: '',
-    tags,
-    created_at: Math.floor(Date.now() / 1000)
-  });
-  
+  const event = new NDKEvent(ndk);
+  event.kind = 27235; // NIP-98 HTTP Auth
+  event.tags = tags;
+  event.created_at = Math.floor(Date.now() / 1000);
+
+  await event.sign();
+  // NDKEvent.toNostrEvent() gives the raw object
+  const rawEvent = event.toNostrEvent();
+
   // Return the token (base64 encoded event)
-  return btoa(JSON.stringify(event));
+  return btoa(JSON.stringify(rawEvent));
 }
 
 // Helper function to handle API errors with user-friendly messages
@@ -141,6 +144,7 @@ async function handleAPIError(response: Response) {
 
 export function useShakespeare() {
   const { user } = useCurrentUser();
+  const { ndk } = useNDK();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -151,11 +155,11 @@ export function useShakespeare() {
 
   // Chat completion function
   const sendChatMessage = useCallback(async (
-    messages: ChatMessage[], 
+    messages: ChatMessage[],
     model: string = 'shakespeare',
     options?: Partial<ChatCompletionRequest>
   ): Promise<ChatCompletionResponse> => {
-    if (!user) {
+    if (!user || !ndk) {
       throw new Error('User must be logged in to use AI features');
     }
 
@@ -172,8 +176,8 @@ export function useShakespeare() {
       const token = await createNIP98Token(
         'POST',
         `${SHAKESPEARE_API_URL}/chat/completions`,
-        requestBody,
-        user
+        ndk,
+        requestBody
       );
 
       const response = await fetch(`${SHAKESPEARE_API_URL}/chat/completions`, {
@@ -189,35 +193,30 @@ export function useShakespeare() {
       return await response.json();
     } catch (err) {
       let errorMessage = 'An unexpected error occurred';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      // Add context for common issues
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === 'string') errorMessage = err;
+
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
         errorMessage = 'Network error: Please check your internet connection and try again.';
       } else if (errorMessage.includes('signer')) {
         errorMessage = 'Authentication error: Please make sure you are logged in with a Nostr account that supports signing.';
       }
-      
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, ndk]);
 
   // Streaming chat completion function
   const sendStreamingMessage = useCallback(async (
-    messages: ChatMessage[], 
+    messages: ChatMessage[],
     model: string = 'shakespeare',
     onChunk: (chunk: string) => void,
     options?: Partial<ChatCompletionRequest>
   ): Promise<void> => {
-    if (!user) {
+    if (!user || !ndk) {
       throw new Error('User must be logged in to use AI features');
     }
 
@@ -235,8 +234,8 @@ export function useShakespeare() {
       const token = await createNIP98Token(
         'POST',
         `${SHAKESPEARE_API_URL}/chat/completions`,
-        requestBody,
-        user
+        ndk,
+        requestBody
       );
 
       const response = await fetch(`${SHAKESPEARE_API_URL}/chat/completions`, {
@@ -269,7 +268,7 @@ export function useShakespeare() {
             if (line.startsWith('data: ')) {
               const data = line.slice(6);
               if (data === '[DONE]') return;
-              
+
               try {
                 const parsed = JSON.parse(data);
                 const content = parsed.choices?.[0]?.delta?.content;
@@ -287,30 +286,25 @@ export function useShakespeare() {
       }
     } catch (err) {
       let errorMessage = 'An unexpected error occurred';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      // Add context for common issues
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === 'string') errorMessage = err;
+
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
         errorMessage = 'Network error: Please check your internet connection and try again.';
       } else if (errorMessage.includes('signer')) {
         errorMessage = 'Authentication error: Please make sure you are logged in with a Nostr account that supports signing.';
       }
-      
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, ndk]);
 
   // Get available models
   const getAvailableModels = useCallback(async (): Promise<ModelsResponse> => {
-    if (!user) {
+    if (!user || !ndk) {
       throw new Error('User must be logged in to use AI features');
     }
 
@@ -321,8 +315,8 @@ export function useShakespeare() {
       const token = await createNIP98Token(
         'GET',
         `${SHAKESPEARE_API_URL}/models`,
-        undefined,
-        user
+        ndk,
+        undefined
       );
 
       const response = await fetch(`${SHAKESPEARE_API_URL}/models`, {
@@ -336,34 +330,26 @@ export function useShakespeare() {
       return await response.json();
     } catch (err) {
       let errorMessage = 'An unexpected error occurred';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      }
-      
-      // Add context for common issues
+      if (err instanceof Error) errorMessage = err.message;
+      else if (typeof err === 'string') errorMessage = err;
+
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
         errorMessage = 'Network error: Please check your internet connection and try again.';
       } else if (errorMessage.includes('signer')) {
         errorMessage = 'Authentication error: Please make sure you are logged in with a Nostr account that supports signing.';
       }
-      
+
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, ndk]);
 
   return {
-    // State
     isLoading,
     error,
     isAuthenticated: !!user,
-    
-    // Actions
     sendChatMessage,
     sendStreamingMessage,
     getAvailableModels,

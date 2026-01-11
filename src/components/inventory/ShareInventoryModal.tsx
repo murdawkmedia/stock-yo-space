@@ -24,16 +24,33 @@ interface UserShareRowProps {
 function UserShareRow({ pubkey, onRemove, isRemoving, canRemove }: UserShareRowProps) {
   const author = useAuthor(pubkey);
   const metadata = author.data?.metadata;
-  const displayName = metadata?.name || pubkey.slice(0, 12);
+  const isLoading = author.isLoading;
+  const displayName = metadata?.name || `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
+  const shortPubkey = `${pubkey.slice(0, 8)}...${pubkey.slice(-4)}`;
 
   return (
     <div className="flex items-center justify-between rounded-lg border px-3 py-2">
       <div className="flex items-center gap-3">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={metadata?.picture} alt={displayName} />
-          <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <span className="text-sm font-medium">{displayName}</span>
+        {isLoading ? (
+          <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+        ) : (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={metadata?.picture} alt={displayName} />
+            <AvatarFallback>{displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+        )}
+        <div className="flex flex-col">
+          {isLoading ? (
+            <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+          ) : (
+            <>
+              <span className="text-sm font-medium">{displayName}</span>
+              {metadata?.name && (
+                <span className="text-xs text-muted-foreground">{shortPubkey}</span>
+              )}
+            </>
+          )}
+        </div>
       </div>
       {canRemove && onRemove && (
         <Button

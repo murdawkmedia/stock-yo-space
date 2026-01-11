@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useMemo } from 'react';
 import { z } from 'zod';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { AppContext, type AppConfig, type AppContextType, type Theme, type RelayMetadata } from '@/contexts/AppContext';
@@ -52,12 +52,12 @@ export function AppProvider(props: AppProviderProps) {
     setConfig(updater);
   };
 
-  const config = { ...defaultConfig, ...rawConfig };
+  const config = useMemo(() => ({ ...defaultConfig, ...rawConfig }), [defaultConfig, rawConfig]);
 
-  const appContextValue: AppContextType = {
+  const appContextValue: AppContextType = useMemo(() => ({
     config,
     updateConfig,
-  };
+  }), [config, updateConfig]);
 
   // Apply theme effects to document
   useApplyTheme(config.theme);

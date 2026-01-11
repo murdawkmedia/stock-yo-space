@@ -1,42 +1,37 @@
-import { useNostr } from "@nostrify/react";
 import { useMutation, type UseMutationResult } from "@tanstack/react-query";
+import { useNDK } from "@/contexts/NDKContext";
+import { NDKEvent } from "@nostr-dev-kit/ndk";
+import type { NostrEvent } from "@nostrify/nostrify"; // Keep for input types if needed, or define locally
 
-import { useCurrentUser } from "./useCurrentUser";
-
-import type { NostrEvent } from "@nostrify/nostrify";
-
-export function useNostrPublish(): UseMutationResult<NostrEvent> {
-  const { nostr } = useNostr();
-  const { user } = useCurrentUser();
+export function useNostrPublish(): UseMutationResult<NDKEvent, Error, Partial<NostrEvent>> {
+  const { ndk, activeUser } = useNDK();
 
   return useMutation({
-    mutationFn: async (t: Omit<NostrEvent, 'id' | 'pubkey' | 'sig'>) => {
-      if (user) {
-        const tags = t.tags ?? [];
-
-        // Add the client tag if it doesn't exist
-        if (location.protocol === "https:" && !tags.some(([name]) => name === "client")) {
-          tags.push(["client", location.hostname]);
-        }
-
-        const event = await user.signer.signEvent({
-          kind: t.kind,
-          content: t.content ?? "",
-          tags,
-          created_at: t.created_at ?? Math.floor(Date.now() / 1000),
-        });
-
-        await nostr.event(event, { signal: AbortSignal.timeout(5000) });
-        return event;
-      } else {
-        throw new Error("User is not logged in");
+    mutationFn: async (t: Partial<NostrEvent>) => {
+      if (!ndk || !activeUser) {
+        throw new Error("NDK/User not initialized");
       }
+
+      const event = new NDKEvent(ndk);
+      event.kind = t.kind;
+      event.content = t.content || "";
+      event.tags = t.tags || [];
+      event.created_at = t.created_at || Math.floor(Date.now() / 1000);
+      event.pubkey = activeUser.pubkey;
+
+      // Add client tag if protocol is https
+      if (typeof location !== 'undefined' && location.protocol === "https:" && !event.tags.some(([name]) => name === "client")) {
+        event.tags.push(["client", location.hostname]);
+      }
+
+      await event.publish();
+      return event;
     },
     onError: (error) => {
       console.error("Failed to publish event:", error);
     },
     onSuccess: (data) => {
-      console.log("Event published successfully:", data);
+      console.log("Event published successfully:", data.id);
     },
   });
 }

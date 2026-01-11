@@ -1,7 +1,7 @@
 // NOTE: This file is stable and usually should not be modified.
 // It is important that all functionality in this file is preserved, and should only be modified if explicitly requested.
 
-import { ChevronDown, LogOut, UserIcon, UserPlus, Wallet } from 'lucide-react';
+import { ChevronDown, LogOut, UserIcon, UserPlus, Wallet, BadgeCheck } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
-import { WalletModal } from '@/components/WalletModal';
+
 import { useLoggedInAccounts, type Account } from '@/hooks/useLoggedInAccounts';
 import { genUserName } from '@/lib/genUserName';
 
@@ -36,7 +36,12 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
             <AvatarFallback>{getDisplayName(currentUser).charAt(0)}</AvatarFallback>
           </Avatar>
           <div className='flex-1 text-left hidden md:block truncate'>
-            <p className='font-medium text-sm truncate'>{getDisplayName(currentUser)}</p>
+            <div className="flex items-center gap-1">
+              <p className='font-medium text-sm truncate'>{getDisplayName(currentUser)}</p>
+              {currentUser.metadata.nip05 && (
+                <BadgeCheck className="w-4 h-4 text-blue-500 fill-blue-500/10" aria-label="Verified" />
+              )}
+            </div>
           </div>
           <ChevronDown className='w-4 h-4 text-muted-foreground' />
         </button>
@@ -60,15 +65,7 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
-        <WalletModal>
-          <DropdownMenuItem
-            className='flex items-center gap-2 cursor-pointer p-2 rounded-md'
-            onSelect={(e) => e.preventDefault()}
-          >
-            <Wallet className='w-4 h-4' />
-            <span>Wallet Settings</span>
-          </DropdownMenuItem>
-        </WalletModal>
+
         <DropdownMenuItem
           onClick={onAddAccountClick}
           className='flex items-center gap-2 cursor-pointer p-2 rounded-md'

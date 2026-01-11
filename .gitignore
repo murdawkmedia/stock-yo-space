@@ -31,3 +31,12 @@ yarn.lock
 .env
 .env.*
 !.env.example
+
+# Documentation & Archive
+_archive/
+docs/TEST_ACCOUNTS.md
+docs/TEST_CREDENTIALS.md
+
+# Reference
+reference_divine/
+reference_snort/

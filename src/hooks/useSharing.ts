@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNostr } from '@nostrify/react';
+import { useNDK } from '@/contexts/NDKContext';
+import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useToast } from '@/hooks/useToast';
 import { nip19 } from 'nostr-tools';
 import type { SharedInventory } from '@/lib/inventoryTypes';
+import { useInventoryKey } from './useInventoryKey';
 
 // Kind 30078 is for application-specific data (replaceable parameterized)
 const SHARING_KIND = 30078;
@@ -32,30 +34,27 @@ function hexToNpub(hex: string): string {
 }
 
 export function useSharing() {
-  const { nostr } = useNostr();
-  const { user } = useCurrentUser();
+  const { ndk, activeUser: user } = useNDK();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { addReader, removeReader } = useInventoryKey();
 
   // Query: Get current sharing settings
   const { data: sharedUsers = [], isLoading } = useQuery({
     queryKey: ['inventory-shares', user?.pubkey],
     queryFn: async (c) => {
-      if (!user) return [];
+      if (!user || !ndk) return [];
 
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
-      const events = await nostr.query([
-        {
-          kinds: [SHARING_KIND],
-          authors: [user.pubkey],
-          '#d': [SHARING_D_TAG],
-          limit: 1
-        }
-      ], { signal });
+      const events = await ndk.fetchEvents({
+        kinds: [SHARING_KIND as number],
+        authors: [user.pubkey],
+        '#d': [SHARING_D_TAG],
+        limit: 1
+      });
 
-      if (events.length === 0) return [];
+      if (events.size === 0) return [];
 
-      const event = events[0];
+      const event = Array.from(events)[0];
       const shares: SharedInventory[] = [];
 
       for (const tag of event.tags) {
@@ -77,21 +76,18 @@ export function useSharing() {
   const { data: sharedWithMe = [] } = useQuery({
     queryKey: ['inventory-shared-with-me', user?.pubkey],
     queryFn: async (c) => {
-      if (!user) return [];
+      if (!user || !ndk) return [];
 
-      const signal = AbortSignal.any([c.signal, AbortSignal.timeout(3000)]);
       // Search for share events that have the current user as a 'p' tag
-      const events = await nostr.query([
-        {
-          kinds: [SHARING_KIND],
-          '#d': [SHARING_D_TAG],
-          '#p': [user.pubkey],
-          limit: 50
-        }
-      ], { signal });
+      const events = await ndk.fetchEvents({
+        kinds: [SHARING_KIND as number],
+        '#d': [SHARING_D_TAG],
+        '#p': [user.pubkey],
+        limit: 50
+      });
 
       // Extract the authors (people who shared with us)
-      return events.map(e => ({
+      return Array.from(events).map(e => ({
         pubkey: e.pubkey,
         npub: hexToNpub(e.pubkey),
         addedAt: e.created_at
@@ -118,21 +114,21 @@ export function useSharing() {
         throw new Error('Already sharing with this user');
       }
 
-      // Build new tags with existing shares + new one
+      // 1. Grant Access to the Key
+      await addReader.mutateAsync(pubkey);
+
+      // 2. Add to Sharing List (Discovery)
       const newTags: string[][] = [
         ['d', SHARING_D_TAG],
         ...sharedUsers.map(s => ['p', s.pubkey]),
         ['p', pubkey]
       ];
 
-      const event = await user.signer.signEvent({
-        kind: SHARING_KIND,
-        content: '',
-        tags: newTags,
-        created_at: Math.floor(Date.now() / 1000)
-      });
+      const event = new NDKEvent(ndk);
+      event.kind = SHARING_KIND;
+      event.tags = newTags;
 
-      await nostr.event(event);
+      await event.publish();
       return { pubkey, npub: hexToNpub(pubkey) };
     },
     onSuccess: (data) => {
@@ -156,7 +152,10 @@ export function useSharing() {
     mutationFn: async (pubkey: string) => {
       if (!user) throw new Error('Must be logged in');
 
-      // Build new tags without the removed user
+      // 1. Revoke Access to the Key (future updates wont include them)
+      await removeReader.mutateAsync(pubkey);
+
+      // 2. Remove from Sharing List
       const newTags: string[][] = [
         ['d', SHARING_D_TAG],
         ...sharedUsers
@@ -164,14 +163,11 @@ export function useSharing() {
           .map(s => ['p', s.pubkey])
       ];
 
-      const event = await user.signer.signEvent({
-        kind: SHARING_KIND,
-        content: '',
-        tags: newTags,
-        created_at: Math.floor(Date.now() / 1000)
-      });
+      const event = new NDKEvent(ndk);
+      event.kind = SHARING_KIND;
+      event.tags = newTags;
 
-      await nostr.event(event);
+      await event.publish();
       return pubkey;
     },
     onSuccess: () => {

@@ -13,6 +13,7 @@ import { ShoppingListView } from '@/components/inventory/ShoppingListView';
 import { AddItemDialog } from '@/components/inventory/AddItemDialog';
 import { ShareInventoryModal } from '@/components/inventory/ShareInventoryModal';
 import { QuickStats } from '@/components/inventory/QuickStats';
+import { EmptyInventoryState } from '@/components/inventory/EmptyInventoryState';
 
 export function Inventory() {
   const [activeTab, setActiveTab] = useState('inventory');
@@ -81,11 +82,11 @@ export function Inventory() {
                     variant="ghost"
                     size="sm"
                     asChild
-                    className="px-2 sm:px-3 hidden sm:flex"
+                    className="px-2 sm:px-3"
                   >
                     <Link to="/settings" className="flex items-center" title="Settings">
                       <Settings className="h-4 w-4" />
-                      <span className="sm:ml-2">Settings</span>
+                      <span className="hidden sm:inline sm:ml-2">Settings</span>
                     </Link>
                   </Button>
                   <Button
@@ -113,9 +114,13 @@ export function Inventory() {
             <CardContent className="pt-6">
               {/* Inventory Tab */}
               <TabsContent value="inventory" className="space-y-6">
-                {CATEGORIES.map((category) => (
-                  <CategoryView key={category} category={category} />
-                ))}
+                {items.length === 0 ? (
+                  <EmptyInventoryState onAddItem={() => setAddDialogOpen(true)} />
+                ) : (
+                  CATEGORIES.map((category) => (
+                    <CategoryView key={category} category={category} />
+                  ))
+                )}
               </TabsContent>
 
               {/* Shopping List Tab */}

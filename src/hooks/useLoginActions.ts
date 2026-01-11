@@ -1,34 +1,38 @@
-import { useNostr } from '@nostrify/react';
-import { NLogin, useNostrLogin } from '@nostrify/react/login';
-
-// NOTE: This file should not be edited except for adding new login methods.
+import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
+import { useNDK } from '@/contexts/NDKContext';
 
 export function useLoginActions() {
-  const { nostr } = useNostr();
-  const { logins, addLogin, removeLogin } = useNostrLogin();
+  const { loginWithExtension, loginWithPrivateKey, loginWithNip46, logout } = useNDK();
+  // We can use useLoggedInAccounts if we need compatible list management, but simpler is direct NDK usage for actions.
+  // Actually, useLoggedInAccounts provides `setLogin` for some reason?
+  // But LoginDialog calls these actions.
 
   return {
     // Login with a Nostr secret key
-    nsec(nsec: string): void {
-      const login = NLogin.fromNsec(nsec);
-      addLogin(login);
+    async nsec(nsec: string): Promise<void> {
+      try {
+        await loginWithPrivateKey(nsec);
+      } catch (e) {
+        console.error("Login failed", e);
+        throw e;
+      }
     },
     // Login with a NIP-46 "bunker://" URI
     async bunker(uri: string): Promise<void> {
-      const login = await NLogin.fromBunker(uri, nostr);
-      addLogin(login);
+      try {
+        await loginWithNip46(uri);
+      } catch (e) {
+        console.error("Bunker login failed", e);
+        throw e;
+      }
     },
     // Login with a NIP-07 browser extension
     async extension(): Promise<void> {
-      const login = await NLogin.fromExtension();
-      addLogin(login);
+      await loginWithExtension();
     },
     // Log out the current user
     async logout(): Promise<void> {
-      const login = logins[0];
-      if (login) {
-        removeLogin(login.id);
-      }
+      await logout();
     }
   };
 }

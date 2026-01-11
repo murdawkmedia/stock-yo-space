@@ -22,7 +22,7 @@ export function EncryptedItemsManager() {
   const { items, updateQuantity } = useInventory();
   const { user } = useCurrentUser();
   const { toast } = useToast();
-  
+
   const [showEncryptedContent, setShowEncryptedContent] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState<Map<string, boolean>>(new Map());
 
@@ -64,9 +64,9 @@ export function EncryptedItemsManager() {
         return;
       }
 
-      // Encrypt the sensitive data
-      const encrypted = await user.signer.nip44.encrypt(sensitiveData.trim());
-      
+      // Encrypt the sensitive data for self (user's own pubkey)
+      const encrypted = await user.signer.nip44.encrypt(user.pubkey, sensitiveData.trim());
+
       // Update item name to indicate encryption
       const encryptedItem = {
         ...item,
@@ -112,8 +112,9 @@ export function EncryptedItemsManager() {
     setIsLoading(prev => new Map(prev).set(item.id, true));
 
     try {
-      const decrypted = await user.signer.nip44.decrypt(item.encrypted_content);
-      
+      // Decrypt using our own pubkey (since we encrypted for ourselves)
+      const decrypted = await user.signer.nip44.decrypt(user.pubkey, item.encrypted_content);
+
       // Toggle display state
       const next = new Set(showEncryptedContent);
       if (next.has(item.id)) {
@@ -149,7 +150,7 @@ export function EncryptedItemsManager() {
     try {
       // Restore original item name (extract from decrypted content if available)
       const baseName = item.name.replace(/^ENCRYPTED:/, '');
-      
+
       const regularItem = {
         ...item,
         name: item.id, // Use the item ID as name
@@ -228,7 +229,7 @@ export function EncryptedItemsManager() {
                             {item.category}
                           </Badge>
                         </div>
-                        
+
                         <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
                           <span>Qty: {item.quantity} {item.unit}</span>
                           <span>•</span>
@@ -305,7 +306,7 @@ export function EncryptedItemsManager() {
           <div className="grid gap-3 max-h-96 overflow-y-auto p-2">
             {regularItems.map(item => (
               <Card key={item.id} className="border-0 bg-card/50 hover:bg-card transition-all cursor-pointer"
-                    onClick={() => encryptItem(item)}>
+                onClick={() => encryptItem(item)}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
