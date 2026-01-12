@@ -72,11 +72,14 @@ export function useInventoryKey() {
         const myTag = event.tags.find(t => t[0] === 'p' && t[1] === activeUser.pubkey);
         if (!myTag || !myTag[2]) return;
 
+
+        // Try NIP-44 Decryption
         try {
           const encryptedKey = myTag[2];
           const senderUser = new NDKUser({ pubkey: event.pubkey });
 
-          const decryptedHex = await ndk!.signer!.decrypt(senderUser, encryptedKey);
+          // Attempt NIP-44 first
+          const decryptedHex = await ndk!.signer!.decrypt(senderUser, encryptedKey, 'nip44');
           const keyBytes = hexToBytes(decryptedHex);
 
           keys.set(event.pubkey, keyBytes);
@@ -86,7 +89,8 @@ export function useInventoryKey() {
             myKeychain = event;
           }
         } catch (e) {
-          console.warn(`Failed to decrypt key from ${event.pubkey}`, e);
+          console.warn(`Failed to decrypt key from ${event.pubkey} (NIP-44)`, e);
+          // Fallback to NIP-04? No, strict upgrade for Phase 2.
         }
       }));
 
@@ -108,8 +112,8 @@ export function useInventoryKey() {
       const newKey = generateInventoryKey();
       const newKeyHex = bytesToHex(newKey);
 
-      // Encrypt for self
-      const encryptedForSelf = await ndk.signer.encrypt(activeUser, newKeyHex);
+      // Encrypt for self (NIP-44)
+      const encryptedForSelf = await ndk.signer.encrypt(activeUser, newKeyHex, 'nip44');
 
       const event = new NDKEvent(ndk);
       event.kind = KEYCHAIN_KIND;
@@ -136,7 +140,8 @@ export function useInventoryKey() {
       const keyHex = bytesToHex(myKey);
       const targetUser = new NDKUser({ pubkey: targetPubkey });
 
-      const encryptedForTarget = await ndk.signer.encrypt(targetUser, keyHex);
+      // Encrypt for target (NIP-44)
+      const encryptedForTarget = await ndk.signer.encrypt(targetUser, keyHex, 'nip44');
 
       const existingTags = myKeychain.tags.filter(t => t[0] !== 'd');
       const filteredTags = existingTags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
