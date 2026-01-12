@@ -34,7 +34,7 @@ describe('useInventory Sharing Logic', () => {
 
     // Default mocks
     (useNDK as any).mockReturnValue({ ndk: mockNdk, activeUser: mockUser });
-    (useInventoryKey as any).mockReturnValue({ sharedKey: null });
+    (useInventoryKey as any).mockReturnValue({ keys: new Map(), myKey: null, sharedKey: null });
 
     // Default mock implementation
     mockUseQuery.mockImplementation(({ queryFn, enabled }: any) => {

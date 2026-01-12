@@ -12,82 +12,97 @@ export function useInventoryKey() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Query: Get the keychain event (either mine or one shared with me)
-  const { data: keychainEvent, isLoading: isLoadingKeychain } = useQuery({
-    queryKey: ['inventory-keychain', activeUser?.pubkey],
+  // Query: Get all relevant keychain events (mine + those shared with me)
+  const { data: keychains = [], isLoading: isLoadingKeychains } = useQuery({
+    queryKey: ['inventory-keychains', activeUser?.pubkey],
     queryFn: async () => {
-      if (!ndk || !activeUser) return null;
+      if (!ndk || !activeUser) return [];
 
-      // 1. Try to fetch my own keychain first
-      const myEvent = await ndk.fetchEvent({
+      // 1. Fetch own keychain
+      const myPromise = ndk.fetchEvent({
         kinds: [KEYCHAIN_KIND],
         authors: [activeUser.pubkey],
         '#d': [KEYCHAIN_D_TAG],
       });
 
-      if (myEvent) return myEvent;
+      // 2. Fetch shared keychains
+      const sharedPromise = (async () => {
+        const sharedWithMeEvents = await ndk.fetchEvents({
+          kinds: [30078], // SHARING_KIND
+          '#d': ['inventory-shares'], // SHARING_D_TAG
+          '#p': [activeUser.pubkey],
+        });
 
-      // 2. If I don't have a keychain, check who has shared with me
-      // We can't use useSharing() here to avoid circular dependency
-      const sharedWithMeEvents = await ndk.fetchEvents({
-        kinds: [30078], // SHARING_KIND
-        '#d': ['inventory-shares'], // SHARING_D_TAG
-        '#p': [activeUser.pubkey],
-      });
+        const sharers = Array.from(sharedWithMeEvents).map(e => e.pubkey);
+        if (sharers.length === 0) return [];
 
-      const sharers = Array.from(sharedWithMeEvents).map(e => e.pubkey);
-      if (sharers.length === 0) return null;
+        const events = await ndk.fetchEvents({
+          kinds: [KEYCHAIN_KIND],
+          authors: sharers,
+          '#d': [KEYCHAIN_D_TAG],
+        });
+        return Array.from(events);
+      })();
 
-      // 3. Fetch keychains from those sharers
-      const sharedKeychains = await ndk.fetchEvents({
-        kinds: [KEYCHAIN_KIND],
-        authors: sharers,
-        '#d': [KEYCHAIN_D_TAG],
-      });
+      const [myEvent, sharedEvents] = await Promise.all([myPromise, sharedPromise]);
 
-      // 4. Find one that has a key for me
-      for (const event of sharedKeychains) {
-        const hasKeyForMe = event.tags.some(t => t[0] === 'p' && t[1] === activeUser.pubkey);
-        if (hasKeyForMe) return event;
-      }
+      const allEvents = sharedEvents;
+      if (myEvent) allEvents.push(myEvent);
 
-      return null;
+      return allEvents;
     },
     enabled: !!ndk && !!activeUser
   });
 
-  // Query: Extract and decrypt the symmetric key for the current user
-  const { data: sharedKey, isLoading: isLoadingKey } = useQuery({
-    queryKey: ['inventory-shared-key', activeUser?.pubkey, keychainEvent?.id],
+  // Query: Extract and decrypt keys
+  const { data: keysData, isLoading: isLoadingKeys } = useQuery({
+    queryKey: ['inventory-keys', activeUser?.pubkey, keychains.length],
     queryFn: async () => {
-      if (!ndk || !activeUser || !keychainEvent) return null;
-      if (!ndk.signer) return null;
-
-      // Find tag for me: ['p', my_pub, encrypted_key]
-      const myTag = keychainEvent.tags.find(t => t[0] === 'p' && t[1] === activeUser.pubkey);
-      if (!myTag || !myTag[2]) return null;
-
-      const encryptedKey = myTag[2];
-      // The sender is the author of the keychain event (could be self or sharer)
-      const senderUser = new NDKUser({ pubkey: keychainEvent.pubkey });
-
-      try {
-        // NDK decrypt: (sender, value)
-        const decryptedHex = await ndk.signer.decrypt(senderUser, encryptedKey);
-        return hexToBytes(decryptedHex);
-      } catch (e) {
-        console.error('Decryption failed:', e);
-        return null;
+      if (!ndk || !activeUser || !ndk.signer || keychains.length === 0) {
+        return { keys: new Map<string, Uint8Array>(), myKey: null as Uint8Array | null, myKeychain: null as NDKEvent | null };
       }
+
+      const keys = new Map<string, Uint8Array>();
+      let myKey: Uint8Array | null = null;
+      let myKeychain: NDKEvent | null = null;
+
+      await Promise.all(keychains.map(async (event) => {
+        // Find tag for me: ['p', my_pub, encrypted_key]
+        const myTag = event.tags.find(t => t[0] === 'p' && t[1] === activeUser.pubkey);
+        if (!myTag || !myTag[2]) return;
+
+        try {
+          const encryptedKey = myTag[2];
+          const senderUser = new NDKUser({ pubkey: event.pubkey });
+
+          const decryptedHex = await ndk!.signer!.decrypt(senderUser, encryptedKey);
+          const keyBytes = hexToBytes(decryptedHex);
+
+          keys.set(event.pubkey, keyBytes);
+
+          if (event.pubkey === activeUser.pubkey) {
+            myKey = keyBytes;
+            myKeychain = event;
+          }
+        } catch (e) {
+          console.warn(`Failed to decrypt key from ${event.pubkey}`, e);
+        }
+      }));
+
+      return { keys, myKey, myKeychain };
     },
-    enabled: !!ndk && !!activeUser && !!keychainEvent
+    enabled: !!ndk && !!activeUser && keychains.length > 0
   });
+
+  const keys = keysData?.keys || new Map<string, Uint8Array>();
+  const myKey = keysData?.myKey || null;
+  const myKeychain = keysData?.myKeychain || null; // For mutations
 
   // Mutation: Initialize standard key if missing
   const initializeKey = useMutation({
     mutationFn: async () => {
       if (!ndk || !activeUser || !ndk.signer) throw new Error('Not logged in');
-      if (sharedKey) return sharedKey;
+      if (myKey) return myKey;
 
       const newKey = generateInventoryKey();
       const newKeyHex = bytesToHex(newKey);
@@ -106,23 +121,23 @@ export function useInventoryKey() {
       return newKey;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-keychain'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory-shared-key'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-keychains'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-keys'] });
     }
   });
 
   // Mutation: Add Reader
   const addReader = useMutation({
     mutationFn: async (targetPubkey: string) => {
-      if (!ndk || !activeUser || !sharedKey || !keychainEvent) throw new Error('Not ready');
+      if (!ndk || !activeUser || !myKey || !myKeychain) throw new Error('Not ready or no personal key');
       if (!ndk.signer) throw new Error('No signer');
 
-      const keyHex = bytesToHex(sharedKey);
+      const keyHex = bytesToHex(myKey);
       const targetUser = new NDKUser({ pubkey: targetPubkey });
 
       const encryptedForTarget = await ndk.signer.encrypt(targetUser, keyHex);
 
-      const existingTags = keychainEvent.tags.filter(t => t[0] !== 'd');
+      const existingTags = myKeychain.tags.filter(t => t[0] !== 'd');
       const filteredTags = existingTags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
 
       const event = new NDKEvent(ndk);
@@ -135,17 +150,17 @@ export function useInventoryKey() {
       await event.publish();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-keychain'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-keychains'] }); // To update myKeychain ref
     }
   });
 
   // Mutation: Remove Reader
   const removeReader = useMutation({
     mutationFn: async (targetPubkey: string) => {
-      if (!ndk || !keychainEvent) return;
+      if (!ndk || !myKeychain) return;
       if (targetPubkey === activeUser?.pubkey) return;
 
-      const newTags = keychainEvent.tags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
+      const newTags = myKeychain.tags.filter(t => !(t[0] === 'p' && t[1] === targetPubkey));
 
       const event = new NDKEvent(ndk);
       event.kind = KEYCHAIN_KIND;
@@ -154,15 +169,19 @@ export function useInventoryKey() {
       await event.publish();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory-keychain'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-keychains'] });
     }
   });
 
   return {
-    sharedKey,
-    isLoading: isLoadingKeychain || isLoadingKey,
+    keys,
+    sharedKey: myKey || keys.values().next().value || null, // Fallback for backward compatibility
+    myKey, // Explicitly expose myKey for writing
+    isLoading: isLoadingKeychains || isLoadingKeys,
     initializeKey,
     addReader,
     removeReader
   };
 }
+
+

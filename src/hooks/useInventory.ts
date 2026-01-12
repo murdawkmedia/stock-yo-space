@@ -13,12 +13,12 @@ import { useSharing } from './useSharing';
 
 export function useInventory() {
   const { ndk, activeUser } = useNDK();
-  const { sharedKey } = useInventoryKey();
+  const { keys, myKey } = useInventoryKey();
   const queryClient = useQueryClient();
   const { allAuthorPubkeys } = useSharing();
 
   const { data: items = [], isLoading: loading } = useQuery({
-    queryKey: ['inventory', activeUser?.pubkey, sharedKey ? 'encrypted' : 'plaintext'],
+    queryKey: ['inventory', activeUser?.pubkey, keys.size],
     queryFn: async () => {
       if (!ndk || !activeUser) return [];
 
@@ -31,7 +31,7 @@ export function useInventory() {
       const loadedItems: InventoryItem[] = [];
       for (const event of events) {
         try {
-          const item = await eventToInventoryItem(event, sharedKey || null);
+          const item = await eventToInventoryItem(event, keys);
           if (item) loadedItems.push(item);
         } catch (e) {
           console.warn('Failed to parse item:', e);
@@ -54,8 +54,8 @@ export function useInventory() {
 
     const dTag = item.id;
 
-    if (sharedKey) {
-      const encrypted = await encryptInventoryData(JSON.stringify(contentObj), sharedKey);
+    if (myKey) {
+      const encrypted = await encryptInventoryData(JSON.stringify(contentObj), myKey);
       event.content = encrypted;
       event.tags = [['d', dTag], ['s', 'encrypted']];
     } else {
@@ -145,12 +145,15 @@ export function useInventory() {
   };
 }
 
-async function eventToInventoryItem(event: NDKEvent, sharedKey: Uint8Array | null): Promise<InventoryItem | null> {
+async function eventToInventoryItem(event: NDKEvent, keys: Map<string, Uint8Array>): Promise<InventoryItem | null> {
   try {
     let content = event.content;
     let parsed;
-    if (content.startsWith('ivt1-') && sharedKey) {
-      const decrypted = await decryptInventoryData(content, sharedKey);
+    if (content.startsWith('ivt1-')) {
+      const key = keys.get(event.pubkey);
+      if (!key) return null; // Can't decrypt
+
+      const decrypted = await decryptInventoryData(content, key);
       if (!decrypted) return null;
       parsed = JSON.parse(decrypted);
     } else {
