@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNDK } from '@/contexts/NDKContext';
 import { useInventoryKey } from './useInventoryKey';
-import { InventoryItem } from '@/types/inventory';
+import { InventoryItem } from '@/lib/inventoryTypes';
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { v4 as uuidv4 } from 'uuid';
 import { encryptInventoryData, decryptInventoryData } from '@/lib/encryption';
@@ -68,7 +68,7 @@ export function useInventory() {
   };
 
   const addItem = useMutation({
-    mutationFn: async (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'updatedBy'>) => {
+    mutationFn: async (item: Omit<InventoryItem, 'id' | 'lastUpdated' | 'updatedBy' | 'created_at'>) => {
       const uuid = uuidv4();
       const newItem: InventoryItem = {
         ...item,

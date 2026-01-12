@@ -43,7 +43,6 @@ export function AddItemDialog({ open, onOpenChange, initialCategory }: AddItemDi
       const itemId = `${category}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
       await addItem({
-        id: itemId,
         name,
         category,
         quantity: parseInt(quantity) || 0,

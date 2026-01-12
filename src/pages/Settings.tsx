@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Settings, ArrowLeft } from 'lucide-react';
+import { Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
 import { RelayListManager } from '@/components/RelayListManager';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { LoginArea } from '@/components/auth/LoginArea';
@@ -30,7 +30,7 @@ export function Settings() {
           <Card className="border-0 shadow-xl">
             <CardContent className="py-12 px-8 text-center">
               <div className="max-w-sm mx-auto space-y-6">
-                <Settings className="h-12 w-12 mx-auto text-muted-foreground" />
+                <SettingsIcon className="h-12 w-12 mx-auto text-muted-foreground" />
                 <h2 className="text-2xl font-bold">Login Required</h2>
                 <p className="text-muted-foreground">
                   Please log in to access settings and manage your inventory.
@@ -62,7 +62,7 @@ export function Settings() {
           </Button>
           <Link to="/" className="flex items-center gap-3 mb-2 hover:opacity-80 transition-opacity w-fit">
             <div className="p-2 bg-gradient-to-br from-primary to-indigo-600 rounded-lg shadow-lg">
-              <Settings className="h-6 w-6 text-white" />
+              <SettingsIcon className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 via-primary to-indigo-600 bg-clip-text text-transparent">
               Settings

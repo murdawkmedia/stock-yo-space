@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, TrendingUp, TrendingDown, Plus, Minus, Edit, Trash2, PackageCheck } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Plus, Minus, Edit, Trash2, PackageCheck, History } from 'lucide-react';
 import { useNDK } from '@/contexts/NDKContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { type InventoryItem } from '@/lib/inventoryTypes';
@@ -50,7 +50,7 @@ export function InventoryHistory() {
       const timeThreshold = getTimeThreshold();
 
       const inventoryEvents = await ndk.fetchEvents({
-        kinds: [35871],
+        kinds: [35871 as number],
         authors: [user.pubkey],
         since: timeThreshold,
         limit: 500
