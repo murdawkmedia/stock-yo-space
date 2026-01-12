@@ -12,20 +12,46 @@ export function useInventoryKey() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Query: Get the keychain event
+  // Query: Get the keychain event (either mine or one shared with me)
   const { data: keychainEvent, isLoading: isLoadingKeychain } = useQuery({
     queryKey: ['inventory-keychain', activeUser?.pubkey],
     queryFn: async () => {
       if (!ndk || !activeUser) return null;
 
-      // NDK fetch
-      const event = await ndk.fetchEvent({
+      // 1. Try to fetch my own keychain first
+      const myEvent = await ndk.fetchEvent({
         kinds: [KEYCHAIN_KIND],
         authors: [activeUser.pubkey],
         '#d': [KEYCHAIN_D_TAG],
       });
 
-      return event || null;
+      if (myEvent) return myEvent;
+
+      // 2. If I don't have a keychain, check who has shared with me
+      // We can't use useSharing() here to avoid circular dependency
+      const sharedWithMeEvents = await ndk.fetchEvents({
+        kinds: [30078], // SHARING_KIND
+        '#d': ['inventory-shares'], // SHARING_D_TAG
+        '#p': [activeUser.pubkey],
+      });
+
+      const sharers = Array.from(sharedWithMeEvents).map(e => e.pubkey);
+      if (sharers.length === 0) return null;
+
+      // 3. Fetch keychains from those sharers
+      const sharedKeychains = await ndk.fetchEvents({
+        kinds: [KEYCHAIN_KIND],
+        authors: sharers,
+        '#d': [KEYCHAIN_D_TAG],
+      });
+
+      // 4. Find one that has a key for me
+      for (const event of sharedKeychains) {
+        const hasKeyForMe = event.tags.some(t => t[0] === 'p' && t[1] === activeUser.pubkey);
+        if (hasKeyForMe) return event;
+      }
+
+      return null;
     },
     enabled: !!ndk && !!activeUser
   });
@@ -42,9 +68,8 @@ export function useInventoryKey() {
       if (!myTag || !myTag[2]) return null;
 
       const encryptedKey = myTag[2];
-      const senderUser = new NDKUser({ pubkey: keychainEvent.pubkey }); // Usually self, but could be someone else sharing?
-      // Actually keychainEvent is authored by self in this logic (kinds: [30078], authors: [user.pubkey])
-      // So sender is self.
+      // The sender is the author of the keychain event (could be self or sharer)
+      const senderUser = new NDKUser({ pubkey: keychainEvent.pubkey });
 
       try {
         // NDK decrypt: (sender, value)
