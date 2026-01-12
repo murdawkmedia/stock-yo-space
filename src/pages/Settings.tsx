@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Settings as SettingsIcon, ArrowLeft } from 'lucide-react';
 import { RelayListManager } from '@/components/RelayListManager';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useInventoryKey } from '@/hooks/useInventoryKey';
 import { LoginArea } from '@/components/auth/LoginArea';
 
 export function Settings() {
@@ -96,7 +97,54 @@ export function Settings() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Troubleshooting */}
+        <Card className="border-0 shadow-xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm mt-8">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">Troubleshooting</h3>
+                <p className="text-muted-foreground text-sm">
+                  If you are experiencing issues with sharing or data persistence (e.g. "Not ready or no personal key"), try resetting your encryption key.
+                  <br /><strong>Warning:</strong> This will invalidate existing shares. You will need to re-share your inventory.
+                </p>
+              </div>
+              <ResetKeyButton />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+    </div>
+  );
+}
+
+function ResetKeyButton() {
+  const { initializeKey, isLoading, myKey } = useInventoryKey();
+  const [status, setStatus] = React.useState<string>('');
+
+  const handleReset = async () => {
+    try {
+      setStatus('Resetting...');
+      await initializeKey.mutateAsync();
+      setStatus('Success! Key reset.');
+      setTimeout(() => setStatus(''), 3000);
+    } catch (e) {
+      console.error(e);
+      setStatus('Error: ' + (e as Error).message);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <Button
+        variant="destructive"
+        onClick={handleReset}
+        disabled={isLoading || initializeKey.isPending}
+      >
+        {initializeKey.isPending ? 'Resetting...' : 'Reset Inventory Key'}
+      </Button>
+      {status && <span className="text-sm font-medium">{status}</span>}
+      {myKey && <span className="text-xs text-green-600">Active Key Present</span>}
     </div>
   );
 }

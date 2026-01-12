@@ -181,8 +181,19 @@ export function useInventoryKey() {
 
   // Auto-initialize key if missing
   useEffect(() => {
+    // Debug logging for key initialization state
+    if (activeUser && process.env.NODE_ENV === 'development') {
+      console.debug('useInventoryKey check:', {
+        hasActiveUser: !!activeUser,
+        isLoadingKeychains,
+        isLoadingKeys,
+        hasMyKey: !!myKey,
+        isInitializing: initializeKey.isPending
+      });
+    }
+
     if (activeUser && !isLoadingKeychains && !isLoadingKeys && !myKey && !initializeKey.isPending) {
-      console.debug('Auto-initializing inventory key');
+      console.log('Auto-initializing inventory key (NIP-44 Upgrade or Missing Key)');
       initializeKey.mutate();
     }
   }, [activeUser, isLoadingKeychains, isLoadingKeys, myKey, initializeKey.isPending]);
