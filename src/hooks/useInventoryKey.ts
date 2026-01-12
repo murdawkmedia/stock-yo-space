@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { useNDK } from '@/contexts/NDKContext';
 import { useToast } from '@/hooks/useToast';
 import { generateInventoryKey, hexToBytes, bytesToHex } from '@/lib/encryption';
@@ -172,6 +173,14 @@ export function useInventoryKey() {
       queryClient.invalidateQueries({ queryKey: ['inventory-keychains'] });
     }
   });
+
+  // Auto-initialize key if missing
+  useEffect(() => {
+    if (activeUser && !isLoadingKeychains && !isLoadingKeys && !myKey && !initializeKey.isPending) {
+      console.debug('Auto-initializing inventory key');
+      initializeKey.mutate();
+    }
+  }, [activeUser, isLoadingKeychains, isLoadingKeys, myKey, initializeKey.isPending]);
 
   return {
     keys,

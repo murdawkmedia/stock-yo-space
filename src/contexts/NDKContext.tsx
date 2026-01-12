@@ -35,14 +35,26 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [activeUser, setActiveUser] = useState<NDKUser | undefined>(undefined);
 
+  // Session persistence
+  const [session, setSession] = useState<{ type: 'extension' | 'nsec' | 'nip46', payload?: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem('nostr-session');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  const saveSession = (sess: { type: 'extension' | 'nsec' | 'nip46', payload?: string } | null) => {
+    setSession(sess);
+    if (sess) {
+      localStorage.setItem('nostr-session', JSON.stringify(sess));
+    } else {
+      localStorage.removeItem('nostr-session');
+    }
+  };
+
   // Sync relays when prop changes, without destroying NDK instance
   useEffect(() => {
     const updateRelays = async () => {
-      // Logic to update relays could go here, but NDK handles explicitRelayUrls mostly on init.
-      // For now, we just ensure we connect.
-      // If we really need dynamic relay updates without re-init, we'd use ndk.pool.addRelay/removeRelay
-      // But re-connecting is safer than re-instantiating.
-
       try {
         await ndkInstance.connect(2000); // 2s timeout for initial connection attempt
       } catch (err) {
@@ -53,7 +65,7 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
     };
 
     updateRelays();
-  }, [ndkInstance]); // Only run once on mount (since ndkInstance is ref), or depend on relays if we implement dynamic sync.
+  }, [ndkInstance]);
 
   // Handle explicit login with a signer
   const loginWithSigner = useCallback(async (signer: NDKSigner) => {
@@ -72,12 +84,6 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
 
       // Fetch profile in background
       user.fetchProfile().then(() => {
-        // Force update if needed, but usually NDKUser internal state updates are enough
-        // We might need to trigger a re-render if the profile wasn't there initially
-        setActiveUser(new NDKUser({ pubkey: user.pubkey })); // Hack to force re-render with new profile? 
-        // Better: let the components subscribe to the user object or just rely on the reference update if we clone it.
-        // Actually, just setting it again with the same object might not trigger effect if using strict equality.
-        // Let's just create a shallow copy or rely on the initial set being enough for "Log in" state.
         setActiveUser(Object.assign(new NDKUser({ pubkey: user.pubkey }), user));
       }).catch(e => {
         console.warn('Failed to fetch profile:', e);
@@ -88,17 +94,20 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
   const loginWithExtension = useCallback(async () => {
     const signer = new NDKNip07Signer();
     await loginWithSigner(signer);
+    saveSession({ type: 'extension' });
   }, [loginWithSigner]);
 
   const loginWithPrivateKey = useCallback(async (key: string) => {
     const signer = new NDKPrivateKeySigner(key);
     await loginWithSigner(signer);
+    saveSession({ type: 'nsec', payload: key });
   }, [loginWithSigner]);
 
   const loginWithNip46 = useCallback(async (connectionString: string) => {
     if (!ndk) return;
     const signer = new NDKNip46Signer(ndk, connectionString);
     await loginWithSigner(signer);
+    saveSession({ type: 'nip46', payload: connectionString });
   }, [ndk, loginWithSigner]);
 
   const logout = useCallback(() => {
@@ -106,7 +115,38 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
       ndk.signer = undefined;
     }
     setActiveUser(undefined);
+    saveSession(null);
   }, [ndk]);
+
+  // Auto-login on mount
+  useEffect(() => {
+    if (activeUser) return; // Already logged in?
+    if (!session) return;
+
+    const restoreSession = async () => {
+      try {
+        if (session.type === 'extension') {
+          // Wait a bit for extension to inject
+          setTimeout(async () => {
+            const signer = new NDKNip07Signer();
+            await loginWithSigner(signer);
+          }, 500);
+        } else if (session.type === 'nsec' && session.payload) {
+          const signer = new NDKPrivateKeySigner(session.payload);
+          await loginWithSigner(signer);
+        } else if (session.type === 'nip46' && session.payload) {
+          if (!ndk) return;
+          const signer = new NDKNip46Signer(ndk, session.payload);
+          await loginWithSigner(signer);
+        }
+      } catch (e) {
+        console.error('Failed to restore session:', e);
+        saveSession(null); // Clear bad session
+      }
+    };
+
+    restoreSession();
+  }, [session, loginWithSigner, activeUser, ndk]);
 
   const contextValue = useMemo(() => ({
     ndk,
