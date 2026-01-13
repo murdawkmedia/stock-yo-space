@@ -99,6 +99,7 @@ export function useSharing() {
   // Mutation: Add a user to share with
   const addSharedUser = useMutation({
     mutationFn: async (npubOrHex: string) => {
+      console.log('🔗 Sharing mutation started for:', npubOrHex);
       if (!user) throw new Error('Must be logged in');
 
       // Decode npub if needed
