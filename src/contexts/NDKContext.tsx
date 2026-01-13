@@ -56,9 +56,18 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
   useEffect(() => {
     const updateRelays = async () => {
       try {
-        await ndkInstance.connect(2000); // 2s timeout for initial connection attempt
+        console.log('🔌 NDK Connecting to relays:', relays);
+        await ndkInstance.connect(2500); // 2.5s timeout
+        console.log('✅ NDK Connected. Active pool size:', ndkInstance.pool.connectedRelays().length);
+
+        // Log individual relay statuses
+        ndkInstance.pool.relays.forEach(r => {
+          console.debug(`Relay ${r.url}: Status ${r.status}, Connection: ${r.connectivityStatus}`);
+        });
+
       } catch (err) {
-        console.error('Failed to connect to NDK relays:', err);
+        console.warn('⚠️ NDK Connection timeout or partial failure:', err);
+        // We still proceed, as some relays might be connected or we can work offline/later
       } finally {
         setIsLoading(false);
       }

@@ -139,7 +139,7 @@ function ResetKeyButton() {
       <Button
         variant="destructive"
         onClick={handleReset}
-        disabled={isLoading || initializeKey.isPending}
+        disabled={initializeKey.isPending} // Allow reset even if query is "loading" (stuck)
       >
         {initializeKey.isPending ? 'Resetting...' : 'Reset Inventory Key'}
       </Button>
