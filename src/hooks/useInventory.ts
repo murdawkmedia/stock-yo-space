@@ -22,19 +22,23 @@ export function useInventory() {
     queryFn: async () => {
       if (!ndk || !activeUser) return [];
 
+      console.log('📦 Fetching inventory items for authors:', allAuthorPubkeys.length);
       const events = await ndk.fetchEvents({
         kinds: [INVENTORY_KIND],
         authors: allAuthorPubkeys,
         limit: 200
       });
 
+      console.log(`📦 Found ${events.size} inventory events. Decrypting...`);
+
       const loadedItems: InventoryItem[] = [];
       for (const event of events) {
         try {
           const item = await eventToInventoryItem(event, keys);
           if (item) loadedItems.push(item);
+          else console.debug('❌ Item decryption skipped/failed for:', event.id);
         } catch (e) {
-          console.warn('Failed to parse item:', e);
+          console.warn('Failed to parse item:', event.id, e);
         }
       }
       return loadedItems;
@@ -162,7 +166,8 @@ async function eventToInventoryItem(event: NDKEvent, keys: Map<string, Uint8Arra
       } catch { return null; }
     }
     return { ...parsed, id: getDTag(event) || parsed.id };
-  } catch {
+  } catch (e) {
+    console.warn(`Event ${event.id} parsing error:`, e);
     return null;
   }
 }

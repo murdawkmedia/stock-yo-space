@@ -58,16 +58,18 @@ export function App() {
     // <UnheadProvider head={head}>
     <AppProvider storageKey="nostr:app-config" defaultConfig={defaultConfig}>
       <HelmetProvider>
-        <QueryClientProvider client={queryClient}>
-          <NDKProvider relays={relayUrls}>
-            <TooltipProvider>
-              <Toaster />
-              <Suspense>
-                <AppRouter />
-              </Suspense>
-            </TooltipProvider>
-          </NDKProvider>
-        </QueryClientProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <NDKProvider relays={relayUrls}>
+              <TooltipProvider>
+                <Toaster />
+                <Suspense>
+                  <AppRouter />
+                </Suspense>
+              </TooltipProvider>
+            </NDKProvider>
+          </QueryClientProvider>
+        </ErrorBoundary>
       </HelmetProvider>
     </AppProvider>
     // </UnheadProvider>

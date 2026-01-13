@@ -115,85 +115,115 @@ export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalP
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        {/* ... header ... */}
-        {/* ... Your NPUB ... */}
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Share Inventory
+          </DialogTitle>
+          <DialogDescription>
+            Share your inventory with family members or roommates. They'll see your items when they log in.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Add new share */}
-        <div className="space-y-2">
-          <Label htmlFor="npub">Share with someone</Label>
-          <form
-            className="flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleAddUser(e as unknown as React.MouseEvent);
-            }}
-          >
-            <Input
-              id="npub"
-              placeholder="Enter npub1... or hex pubkey"
-              value={npubInput}
-              onChange={(e) => setNpubInput(e.target.value)}
-            // Removed onKeyDown, rely on form submission
-            />
+        <div className="space-y-6 py-4">
+          {/* Your NPUB for others to use */}
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <Label className="text-sm font-medium">Your Nostr ID (share this)</Label>
+            <p className="text-xs text-muted-foreground mt-1 mb-2">
+              Give this to others so they can share their inventory with you
+            </p>
             <Button
-              type="submit"
-              disabled={isAddingUser || !npubInput.trim()}
-              size="icon"
+              variant="outline"
+              onClick={handleCopyNpub}
+              className="w-full justify-between"
             >
-              <UserPlus className="h-4 w-4" />
+              <span className="truncate text-xs font-mono">
+                {user?.pubkey ? `npub1${user.pubkey.slice(0, 8)}...` : 'Loading...'}
+              </span>
+              {copied ? (
+                <Check className="h-4 w-4 text-green-500" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
             </Button>
-          </form>
+          </div>
+
+          {/* Add new share */}
+          <div className="space-y-2">
+            <Label htmlFor="npub">Share with someone</Label>
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddUser(e as unknown as React.MouseEvent);
+              }}
+            >
+              <Input
+                id="npub"
+                placeholder="Enter npub1... or hex pubkey"
+                value={npubInput}
+                onChange={(e) => setNpubInput(e.target.value)}
+              // Removed onKeyDown, rely on form submission
+              />
+              <Button
+                type="submit"
+                disabled={isAddingUser || !npubInput.trim()}
+                size="icon"
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+
+          {/* People you're sharing with */}
+          {sharedUsers.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                People who can see your inventory ({sharedUsers.length})
+              </Label>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {sharedUsers.map((share) => (
+                  <UserShareRow
+                    key={share.pubkey}
+                    pubkey={share.pubkey}
+                    onRemove={removeSharedUser}
+                    isRemoving={isRemovingUser}
+                    canRemove
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* People sharing with you */}
+          {sharedWithMe.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Share2 className="h-4 w-4" />
+                People sharing with you ({sharedWithMe.length})
+              </Label>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {sharedWithMe.map((share) => (
+                  <UserShareRow key={share.pubkey} pubkey={share.pubkey} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sharedUsers.length === 0 && sharedWithMe.length === 0 && (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              No shares yet. Add someone's npub above to share your inventory with them.
+            </p>
+          )}
         </div>
 
-        {/* People you're sharing with */}
-        {sharedUsers.length > 0 && (
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              People who can see your inventory ({sharedUsers.length})
-            </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {sharedUsers.map((share) => (
-                <UserShareRow
-                  key={share.pubkey}
-                  pubkey={share.pubkey}
-                  onRemove={removeSharedUser}
-                  isRemoving={isRemovingUser}
-                  canRemove
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* People sharing with you */}
-        {sharedWithMe.length > 0 && (
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              People sharing with you ({sharedWithMe.length})
-            </Label>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {sharedWithMe.map((share) => (
-                <UserShareRow key={share.pubkey} pubkey={share.pubkey} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {sharedUsers.length === 0 && sharedWithMe.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-4">
-            No shares yet. Add someone's npub above to share your inventory with them.
-          </p>
-        )}
-      </div>
-
-      <DialogFooter>
-        <Button variant="outline" onClick={() => onOpenChange(false)}>
-          Close
-        </Button>
-      </DialogFooter>
-    </DialogContent>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog >
   );
 }

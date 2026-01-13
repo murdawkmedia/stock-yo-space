@@ -129,28 +129,44 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
 
   // Auto-login on mount
   useEffect(() => {
-    if (activeUser) return; // Already logged in?
-    if (!session) return;
+    // If we have a session but no active user, we are restoring.
+    // If no session, we aren't restoring, so we can stop loading (if not already handled by connection).
+    if (!session && !activeUser) {
+      if (!ndkInstance.pool.connectedRelays().length) {
+        // wait for connection? or just let it be.
+      }
+      return;
+    }
+
+    if (activeUser) return; // Already logged in
 
     const restoreSession = async () => {
+      // setIsLoading(true); // Should already be true initally
       try {
-        if (session.type === 'extension') {
-          // Wait a bit for extension to inject
+        console.log('🔄 Restoring session:', session?.type);
+        if (session?.type === 'extension') {
+          // ... existing logic ...
           setTimeout(async () => {
             const signer = new NDKNip07Signer();
             await loginWithSigner(signer);
           }, 500);
-        } else if (session.type === 'nsec' && session.payload) {
+        } else if (session?.type === 'nsec' && session.payload) {
           const signer = new NDKPrivateKeySigner(session.payload);
           await loginWithSigner(signer);
-        } else if (session.type === 'nip46' && session.payload) {
+        } else if (session?.type === 'nip46' && session.payload) {
           if (!ndk) return;
           const signer = new NDKNip46Signer(ndk, session.payload);
           await loginWithSigner(signer);
         }
       } catch (e) {
         console.error('Failed to restore session:', e);
-        saveSession(null); // Clear bad session
+        saveSession(null);
+      } finally {
+        // Only set loading to false AFTER restoration attempt
+        // But we have a race with the relay connection loading state.
+        // Let's rely on the separate `isLoading` state management or unify them.
+        // For now, let's log completion.
+        console.log('✅ Session restore attempt complete');
       }
     };
 
