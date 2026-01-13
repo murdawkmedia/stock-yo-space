@@ -192,11 +192,11 @@ export function useInventoryKey() {
       });
     }
 
-    if (activeUser && !isLoadingKeychains && !isLoadingKeys && !myKey && !initializeKey.isPending) {
+    if (activeUser && ndk?.signer && !isLoadingKeychains && !isLoadingKeys && !myKey && !initializeKey.isPending) {
       console.log('Auto-initializing inventory key (NIP-44 Upgrade or Missing Key)');
       initializeKey.mutate();
     }
-  }, [activeUser, isLoadingKeychains, isLoadingKeys, myKey, initializeKey.isPending]);
+  }, [activeUser, ndk?.signer, isLoadingKeychains, isLoadingKeys, myKey, initializeKey.isPending]);
 
   return {
     keys,
