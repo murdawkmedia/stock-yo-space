@@ -19,6 +19,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 // import { NWCProvider } from '@/contexts/NWCContext'; // Keeping for now, might need refactor
 import { AppProvider } from '@/components/AppProvider';
 import { AppConfig } from '@/contexts/AppContext';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import AppRouter from './AppRouter';
 
 // const head = createUnhead({
