@@ -11,6 +11,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useLoginActions } from '@/hooks/useLoginActions';
 import { cn } from '@/lib/utils';
 
+import { nip19 } from 'nostr-tools';
+
 interface LoginDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,7 +21,13 @@ interface LoginDialogProps {
 }
 
 const validateNsec = (nsec: string) => {
-  return /^nsec1[a-zA-Z0-9]{58}$/.test(nsec);
+  try {
+    const { type } = nip19.decode(nsec);
+    return type === 'nsec';
+  } catch (e) {
+    console.error('Nsec validation failed:', e);
+    return false;
+  }
 };
 
 const validateBunkerUri = (uri: string) => {
