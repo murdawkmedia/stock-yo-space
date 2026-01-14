@@ -163,7 +163,6 @@ export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalP
                 placeholder="Enter npub1... or hex pubkey"
                 value={npubInput}
                 onChange={(e) => setNpubInput(e.target.value)}
-              // Removed onKeyDown, rely on form submission
               />
               <Button
                 type="submit"
@@ -173,6 +172,20 @@ export function ShareInventoryModal({ open, onOpenChange }: ShareInventoryModalP
                 <UserPlus className="h-4 w-4" />
               </Button>
             </form>
+            {/* Helper to show what we parsed */}
+            {npubInput.trim() && (
+              <p className="text-xs text-muted-foreground ml-1">
+                {(() => {
+                  try {
+                    // Quick check if it looks like an npub or hex
+                    const clean = npubInput.trim();
+                    if (clean.startsWith('npub1')) return `Sharing with: ${clean.slice(0, 12)}...`;
+                    if (clean.match(/^[0-9a-fA-F]{64}$/)) return `Sharing with: npub... (Hex provided)`;
+                    return 'Invalid format';
+                  } catch { return ''; }
+                })()}
+              </p>
+            )}
           </div>
 
           {/* People you're sharing with */}

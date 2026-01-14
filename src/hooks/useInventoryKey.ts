@@ -27,28 +27,57 @@ export function useInventoryKey() {
       });
 
       // 2. Fetch shared keychains
+      // 2. Fetch shared keychains (with timeout/error handling)
       const sharedPromise = (async () => {
-        const sharedWithMeEvents = await ndk.fetchEvents({
-          kinds: [30078], // SHARING_KIND
-          '#d': ['inventory-shares'], // SHARING_D_TAG
-          '#p': [activeUser.pubkey],
-        });
+        try {
+          // Add a timeout race
+          const fetchShared = async () => {
+            const sharedWithMeEvents = await ndk.fetchEvents({
+              kinds: [30078],
+              '#d': ['inventory-shares'],
+              '#p': [activeUser.pubkey],
+            }, { closeOnEose: true });
 
-        const sharers = Array.from(sharedWithMeEvents).map(e => e.pubkey);
-        if (sharers.length === 0) return [];
+            const sharers = Array.from(sharedWithMeEvents).map(e => e.pubkey);
+            if (sharers.length === 0) return [];
 
-        const events = await ndk.fetchEvents({
-          kinds: [KEYCHAIN_KIND],
-          authors: sharers,
-          '#d': [KEYCHAIN_D_TAG],
-        });
-        return Array.from(events);
+            const events = await ndk.fetchEvents({
+              kinds: [KEYCHAIN_KIND],
+              authors: sharers,
+              '#d': [KEYCHAIN_D_TAG],
+            }, { closeOnEose: true }); // Ensure we close on EOSE
+            return Array.from(events);
+          };
+
+          // 10s timeout for shared keys (increased for reliability)
+          const timeout = new Promise<NDKEvent[]>((_, reject) =>
+            setTimeout(() => reject(new Error('Shared key fetch timeout')), 10000)
+          );
+
+          return await Promise.race([fetchShared(), timeout]);
+        } catch (e) {
+          console.warn('Failed to fetch shared keychains:', e);
+          return [];
+        }
       })();
 
-      const [myEvent, sharedEvents] = await Promise.all([myPromise, sharedPromise]);
+      // Use allSettled to ensure myKey doesn't fail if shared fails
+      const [myResult, sharedResult] = await Promise.allSettled([myPromise, sharedPromise]);
 
-      const allEvents = sharedEvents;
-      if (myEvent) allEvents.push(myEvent);
+      const allEvents: NDKEvent[] = [];
+
+      // Process Shared
+      if (sharedResult.status === 'fulfilled') {
+        allEvents.push(...sharedResult.value);
+      }
+
+      // Process Mine
+      // Critical: If my fetch failed, we can't really do much, but we generally expect it to work or be cached.
+      if (myResult.status === 'fulfilled' && myResult.value) {
+        allEvents.push(myResult.value);
+      } else if (myResult.status === 'rejected') {
+        console.error('Failed to fetch my keychain:', myResult.reason);
+      }
 
       return allEvents;
     },
@@ -134,6 +163,15 @@ export function useInventoryKey() {
   // Mutation: Add Reader
   const addReader = useMutation({
     mutationFn: async (targetPubkey: string) => {
+      console.log('➕ addReader mutation started for:', targetPubkey);
+      console.log('   State:', {
+        hasNDK: !!ndk,
+        hasUser: !!activeUser,
+        hasMyKey: !!myKey,
+        hasKeychain: !!myKeychain,
+        hasSigner: !!ndk?.signer
+      });
+
       if (!ndk || !activeUser || !myKey || !myKeychain) throw new Error('Not ready or no personal key');
       if (!ndk.signer) throw new Error('No signer');
 

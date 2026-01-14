@@ -1,7 +1,7 @@
 // NOTE: This file is stable and usually should not be modified.
 // It is important that all functionality in this file is preserved, and should only be modified if explicitly requested.
 
-import { ChevronDown, LogOut, UserIcon, UserPlus, Wallet, BadgeCheck } from 'lucide-react';
+import { ChevronDown, LogOut, UserIcon, UserPlus, Wallet, BadgeCheck, Settings, ShoppingCart, Box, Sun, Moon, Laptop } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu.tsx';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar.tsx';
+import { Link } from 'react-router-dom';
+import { useTheme } from '@/components/ThemeProvider';
 
 import { useLoggedInAccounts, type Account } from '@/hooks/useLoggedInAccounts';
 import { genUserName } from '@/lib/genUserName';
@@ -20,6 +22,7 @@ interface AccountSwitcherProps {
 
 export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
   const { currentUser, otherUsers, setLogin, removeLogin } = useLoggedInAccounts();
+  const { theme, setTheme } = useTheme();
 
   if (!currentUser) return null;
 
@@ -64,6 +67,58 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
             {user.id === currentUser.id && <div className='w-2 h-2 rounded-full bg-primary'></div>}
           </DropdownMenuItem>
         ))}
+
+        <DropdownMenuSeparator />
+
+        <div className='font-medium text-sm px-2 py-1.5'>Menu</div>
+        <DropdownMenuItem asChild>
+          <Link to="/inventory" className='flex items-center gap-2 cursor-pointer p-2 rounded-md'>
+            <Box className="w-4 h-4" />
+            <span>Inventory</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/shopping-list" className='flex items-center gap-2 cursor-pointer p-2 rounded-md'>
+            <ShoppingCart className="w-4 h-4" />
+            <span>Shopping List</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/settings" className='flex items-center gap-2 cursor-pointer p-2 rounded-md'>
+            <Settings className="w-4 h-4" />
+            <span>Settings</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <div className='px-2 py-1.5 flex items-center justify-between'>
+          <span className='text-sm font-medium'>Theme</span>
+          <div className='flex items-center gap-1 border rounded-lg p-0.5'>
+            <button
+              onClick={() => setTheme('light')}
+              className={`p-1 rounded-md transition-all ${theme === 'light' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              title="Light Mode"
+            >
+              <Sun className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setTheme('dark')}
+              className={`p-1 rounded-md transition-all ${theme === 'dark' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              title="Dark Mode"
+            >
+              <Moon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setTheme('system')}
+              className={`p-1 rounded-md transition-all ${theme === 'system' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              title="System"
+            >
+              <Laptop className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
@@ -75,7 +130,7 @@ export function AccountSwitcher({ onAddAccountClick }: AccountSwitcherProps) {
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => removeLogin()}
-          className='flex items-center gap-2 cursor-pointer p-2 rounded-md text-red-500'
+          className='flex items-center gap-2 cursor-pointer p-2 rounded-md text-red-500 focus:text-red-500'
         >
           <LogOut className='w-4 h-4' />
           <span>Log out</span>

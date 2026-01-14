@@ -15,11 +15,19 @@ const SHARING_D_TAG = 'inventory-shares';
 function npubToHex(npub: string): string | null {
   try {
     const decoded = nip19.decode(npub);
+    console.log('🔍 nip19 decode result:', decoded);
     if (decoded.type === 'npub') {
-      return decoded.data;
+      // Handle strictnostr/nostr-tools v2 which might return string or specific data type
+      // If it's already a string, return it.
+      if (typeof decoded.data === 'string') return decoded.data;
+      // If it's bytes (Uint8Array), convert to hex
+      // We can't easily import utils here without making it messy, so let's try to assume string for now or check if it is not string.
+      // Actually, nostr-tools v2 decode returns { type, data: string } for npub usually.
+      return decoded.data as string;
     }
     return null;
-  } catch {
+  } catch (e) {
+    console.error('❌ nip19 decode failed:', e);
     return null;
   }
 }
@@ -85,6 +93,13 @@ export function useSharing() {
         '#p': [user.pubkey],
         limit: 50
       });
+
+      console.log('🔌 useSharing: Checking connected relays:', ndk.pool.connectedRelays().map(r => r.url));
+
+      // (Debug block for specific owner removed - general logging below is sufficient)
+
+      console.log('🔗 useSharing: Found share events:', events.size);
+      events.forEach(e => console.log('   - From:', e.pubkey));
 
       // Extract the authors (people who shared with us)
       return Array.from(events).map(e => ({

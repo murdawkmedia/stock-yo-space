@@ -20,6 +20,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from '@/components/AppProvider';
 import { AppConfig } from '@/contexts/AppContext';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import AppRouter from './AppRouter';
 
 // const head = createUnhead({
@@ -45,7 +46,8 @@ const defaultConfig: AppConfig = {
       { url: 'wss://relay.primal.net', read: true, write: true },
       { url: 'wss://relay.damus.io', read: true, write: true },
       { url: 'wss://nos.lol', read: true, write: true },
-      { url: 'wss://relay.nostr.band', read: true, write: true },
+      { url: 'wss://relay.snort.social', read: true, write: true },
+      // { url: 'wss://relay.bitcoiner.social', read: true, write: true }, // Commented out for now, let's stick to known good general relays
     ],
     updatedAt: 0,
   },
@@ -60,16 +62,18 @@ export function App() {
     <AppProvider storageKey="nostr:app-config" defaultConfig={defaultConfig}>
       <HelmetProvider>
         <ErrorBoundary>
-          <QueryClientProvider client={queryClient}>
-            <NDKProvider relays={relayUrls}>
-              <TooltipProvider>
-                <Toaster />
-                <Suspense>
-                  <AppRouter />
-                </Suspense>
-              </TooltipProvider>
-            </NDKProvider>
-          </QueryClientProvider>
+          <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+            <QueryClientProvider client={queryClient}>
+              <NDKProvider relays={relayUrls}>
+                <TooltipProvider>
+                  <Toaster />
+                  <Suspense>
+                    <AppRouter />
+                  </Suspense>
+                </TooltipProvider>
+              </NDKProvider>
+            </QueryClientProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </HelmetProvider>
     </AppProvider>

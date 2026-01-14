@@ -23,7 +23,7 @@ Then hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R).
 | Role  | nsec | npub |
 |-------|------|------|
 | Owner | `nsec1wnqh6y2aqlkygufm90vyjs38d6wcq2qzzh536tshg5u93m0w640shfrm4d` | (derived on login) |
-| Guest | `nsec1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7syzgmx0` | `npub1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7s23k8s6` |
+| Guest | `nsec1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7syzgmx0` | `npub158wvv99rsf0w379w6paq428vzsrhsstyfmncf3wh83ghnktn3jsqtkzn2f` |
 
 ---
 
@@ -120,7 +120,7 @@ Signer initialized
 1. Look at the list of shared users in the dialog
 2. If the Guest npub is already listed:
    ```
-   npub1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7s23k8s6
+   npub158wvv99rsf0w379w6paq428vzsrhsstyfmncf3wh83ghnktn3jsqtkzn2f
    ```
 3. Click the trash/remove icon next to it to remove them
 4. Wait for removal confirmation
@@ -138,7 +138,7 @@ Signer initialized
 1. With Share dialog open, locate the npub input field (id="npub")
 2. Type or paste the Guest npub:
    ```
-   npub1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7s23k8s6
+   npub158wvv99rsf0w379w6paq428vzsrhsstyfmncf3wh83ghnktn3jsqtkzn2f
    ```
 3. **CHECKPOINT**: No validation error should appear
 
@@ -149,7 +149,7 @@ Signer initialized
 
 ### Expected Console Output (Phase 4 logging):
 ```
-Adding shared user: npub1qvqdaxh9zk42msuvlrzxx376a9k73kqc4ugfgjq4sg656tf0dy7s23k8s6
+Adding shared user: npub158wvv99rsf0w379w6paq428vzsrhsstyfmncf3wh83ghnktn3jsqtkzn2f
 Share added successfully
 ```
 
