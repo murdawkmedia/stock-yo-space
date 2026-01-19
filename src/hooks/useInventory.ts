@@ -151,7 +151,7 @@ export function useInventory() {
 
 async function eventToInventoryItem(event: NDKEvent, keys: Map<string, Uint8Array>): Promise<InventoryItem | null> {
   try {
-    let content = event.content;
+    const content = event.content;
     let parsed;
     if (content.startsWith('ivt1-')) {
       const key = keys.get(event.pubkey);

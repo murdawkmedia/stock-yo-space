@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
-import { Plus, ShoppingCart, Package, TrendingDown, Home, Share2, Settings } from 'lucide-react';
+import { Plus, ShoppingCart, Package, Home, Share2, Settings } from 'lucide-react';
 
 import { useInventory } from '@/hooks/useInventory';
 import { useSharing } from '@/hooks/useSharing';
-import { CATEGORIES, CATEGORY_LABELS, CATEGORY_DESCRIPTIONS } from '@/lib/inventoryTypes';
+import { CATEGORIES } from '@/lib/inventoryTypes';
 import { CategoryView } from '@/components/inventory/CategoryView';
 import { ShoppingListView } from '@/components/inventory/ShoppingListView';
 import { AddItemDialog } from '@/components/inventory/AddItemDialog';

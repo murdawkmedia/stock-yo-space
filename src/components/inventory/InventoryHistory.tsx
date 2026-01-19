@@ -1,15 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, TrendingUp, TrendingDown, Plus, Minus, Edit, Trash2, PackageCheck, History } from 'lucide-react';
+import { Calendar, TrendingUp, TrendingDown, Plus, Edit, Trash2, History } from 'lucide-react';
 import { useNDK } from '@/contexts/NDKContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { type InventoryItem } from '@/lib/inventoryTypes';
 import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 interface InventoryEvent extends InventoryItem {
   event_id: string;
@@ -42,7 +40,7 @@ export function InventoryHistory() {
   // Query inventory history
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['inventory-history', user?.pubkey, timeFilter],
-    queryFn: async (c) => {
+    queryFn: async () => {
       if (!user) return [];
 
       if (!ndk) return [];
@@ -58,7 +56,7 @@ export function InventoryHistory() {
 
       // Convert Set to Array
       return Array.from(inventoryEvents).map(event => {
-        const tags = event.tags.reduce((acc: any, tag: string[]) => {
+        const tags = event.tags.reduce((acc: Record<string, string>, tag: string[]) => {
           acc[tag[0]] = tag[1];
           return acc;
         }, {});
@@ -245,7 +243,7 @@ export function InventoryHistory() {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <label className="text-sm font-medium mb-2 block">Time Period</label>
-          <Select value={timeFilter} onValueChange={(v: any) => setTimeFilter(v)}>
+          <Select value={timeFilter} onValueChange={(v: '7d' | '30d' | '90d' | 'all') => setTimeFilter(v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo, useRef } from 'react';
-import NDK, { NDKRelaySet, NDKSigner, NDKUser, NDKNip07Signer, NDKPrivateKeySigner, NDKNip46Signer } from '@nostr-dev-kit/ndk';
+import NDK, { NDKSigner, NDKUser, NDKNip07Signer, NDKPrivateKeySigner, NDKNip46Signer } from '@nostr-dev-kit/ndk';
 
 interface NDKContextType {
   ndk: NDK | undefined;
@@ -31,7 +31,7 @@ interface NDKProviderProps {
 export function NDKProvider({ children, relays }: NDKProviderProps) {
   // Create NDK instance once and keep it stable
   const ndkInstance = useRef(new NDK({ explicitRelayUrls: relays })).current;
-  const [ndk, setNdk] = useState<NDK>(ndkInstance); // State wrapper for context consumers
+  const [ndk, _setNdk] = useState<NDK>(ndkInstance); // State wrapper for context consumers
   const [isLoading, setIsLoading] = useState(true);
   const [activeUser, setActiveUser] = useState<NDKUser | undefined>(undefined);
 
@@ -62,7 +62,7 @@ export function NDKProvider({ children, relays }: NDKProviderProps) {
 
         // Log individual relay statuses
         ndkInstance.pool.relays.forEach(r => {
-          console.debug(`Relay ${r.url}: Status ${r.status}, Connection: ${r.connectivityStatus}`);
+          console.debug(`Relay ${r.url}: Status ${r.status}, Connection: ${r.connectivity}`);
         });
 
       } catch (err) {

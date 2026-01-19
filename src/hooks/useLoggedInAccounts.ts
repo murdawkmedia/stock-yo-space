@@ -1,12 +1,13 @@
 import { useNDK } from '@/contexts/NDKContext';
-import { NDKUser } from '@nostr-dev-kit/ndk';
 
 // Keeping the interface compatible with consumers if possible, 
 // or simplifying it if consumers are easily updated.
 export interface Account {
   id: string; // pubkey
   pubkey: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata: Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   signer?: any; // NDKSigner or similar, strictly NDKSigner but consumers might expect other.
   // We'll pass ndk.signer here
 
@@ -18,6 +19,7 @@ export function useLoggedInAccounts() {
 
   // Compat for LoginDialog
   // LoginDialog sends: { type: 'nsec' | 'extension' | 'bunker', sk?: string, uri?: string }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const setLogin = async (login: any) => {
     try {
       if (login.type === 'extension') {

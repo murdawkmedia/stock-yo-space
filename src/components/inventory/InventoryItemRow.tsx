@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Minus, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Minus, Plus, Trash2 } from 'lucide-react';
 import { useInventory } from '@/hooks/useInventory';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAuthor } from '@/hooks/useAuthor';
@@ -78,7 +78,7 @@ export function InventoryItemRow({ item }: InventoryItemRowProps) {
         item,
         newQuantity
       });
-    } catch (error) {
+    } catch (_error) {
       // Revert on error
       setQuantityInput(String(item.quantity));
     }

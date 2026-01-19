@@ -1,14 +1,14 @@
-import { NKinds, NostrEvent, NostrFilter } from '@nostrify/nostrify';
+import { NKinds, NostrEvent } from '@nostrify/nostrify';
 import { useNDK } from '@/contexts/NDKContext';
 import { useQuery } from '@tanstack/react-query';
-import { NDKEvent, NDKKind, NDKFilter } from '@nostr-dev-kit/ndk';
+import { NDKKind, NDKFilter } from '@nostr-dev-kit/ndk';
 
 export function useComments(root: NostrEvent | URL, limit?: number) {
   const { ndk } = useNDK();
 
   return useQuery({
     queryKey: ['nostr', 'comments', root instanceof URL ? root.toString() : root.id, limit],
-    queryFn: async (c) => {
+    queryFn: async () => {
       if (!ndk) return { allComments: [], topLevelComments: [], getDescendants: () => [], getDirectReplies: () => [] };
 
       const filter: NDKFilter = { kinds: [1111 as NDKKind] };

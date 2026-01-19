@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCurrentUser } from './useCurrentUser';
 import { useNDK } from '@/contexts/NDKContext';
-import { NDKEvent, NDKUser } from '@nostr-dev-kit/ndk';
+import NDK, { NDKEvent } from '@nostr-dev-kit/ndk';
 
 // Types for Shakespeare API (compatible with OpenAI ChatCompletionMessageParam)
 export interface ChatMessage {

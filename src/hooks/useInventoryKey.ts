@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useNDK } from '@/contexts/NDKContext';
-import { useToast } from '@/hooks/useToast';
 import { generateInventoryKey, hexToBytes, bytesToHex } from '@/lib/encryption';
 import { NDKEvent, NDKUser } from '@nostr-dev-kit/ndk';
 
@@ -10,7 +9,6 @@ const KEYCHAIN_D_TAG = 'inventory-keys';
 
 export function useInventoryKey() {
   const { ndk, activeUser } = useNDK();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Query: Get all relevant keychain events (mine + those shared with me)

@@ -1,4 +1,3 @@
-import { useLoggedInAccounts } from '@/hooks/useLoggedInAccounts';
 import { useNDK } from '@/contexts/NDKContext';
 
 export function useLoginActions() {

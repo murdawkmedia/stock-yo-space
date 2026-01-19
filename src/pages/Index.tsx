@@ -1,12 +1,9 @@
-import { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 
-import { Navigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Package, ShoppingCart, TrendingDown, Zap, Sparkles, Home, Boxes, PackageOpen } from 'lucide-react';
-import { useInventory } from '@/hooks/useInventory';
+import { Package, Zap, Sparkles, Home, Boxes, PackageOpen } from 'lucide-react';
 import { LoginArea } from '@/components/auth/LoginArea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 
@@ -14,7 +11,6 @@ const Index = () => {
 
 
   const { user } = useCurrentUser();
-  const { items, shoppingListItems, lowStockItems } = useInventory();
 
   // if (user) {
   //   return <Navigate to="/inventory" replace />;

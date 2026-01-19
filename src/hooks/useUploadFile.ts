@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { BlossomUploader } from '@nostrify/nostrify/uploaders';
 
 import { useNDK } from "@/contexts/NDKContext";
-import { NDKEvent, type NDKSigner } from "@nostr-dev-kit/ndk";
+import { NDKEvent } from "@nostr-dev-kit/ndk";
 
 export function useUploadFile() {
   const { ndk, activeUser } = useNDK();

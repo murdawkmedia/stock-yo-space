@@ -119,7 +119,7 @@ export function Settings() {
 }
 
 function ResetKeyButton() {
-  const { initializeKey, isLoading, myKey } = useInventoryKey();
+  const { initializeKey, myKey } = useInventoryKey();
   const [status, setStatus] = React.useState<string>('');
 
   const handleReset = async () => {

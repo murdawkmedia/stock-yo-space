@@ -4,13 +4,71 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Fallback SEO for crawlers that don't execute JS -->
+  <title>Stock Yo Space - Smart Home Inventory Tracker</title>
+  <meta name="description"
+    content="Decentralized, private-first inventory management for your home. Track pantry, freezer, and household items with real-time sync powered by Nostr." />
+  <link rel="canonical" href="https://www.stockyospace.com/" />
+
+  <!-- Open Graph / Facebook (fallback) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.stockyospace.com/" />
+  <meta property="og:title" content="Stock Yo Space - Smart Home Inventory Tracker" />
+  <meta property="og:description"
+    content="Decentralized, private-first inventory management for your home. Track pantry, freezer, and household items with real-time sync." />
+  <meta property="og:image" content="https://www.stockyospace.com/pwa-512x512.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+
+  <!-- Twitter Card (fallback) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://www.stockyospace.com/" />
+  <meta name="twitter:title" content="Stock Yo Space - Smart Home Inventory Tracker" />
+  <meta name="twitter:description"
+    content="Decentralized, private-first inventory management for your home. Track pantry, freezer, and household items with real-time sync." />
+  <meta name="twitter:image" content="https://www.stockyospace.com/pwa-512x512.png" />
+
+  <!-- Prerender hint for AJAX crawlers -->
+  <meta name="fragment" content="!" />
+
+  <!-- CSP -->
   <meta http-equiv="content-security-policy"
     content="default-src 'none'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; frame-src 'self' https:; font-src 'self'; base-uri 'self'; manifest-src 'self'; connect-src 'self' blob: https: wss:; img-src 'self' data: blob: https:; media-src 'self' https:">
+
+  <!-- Favicon & PWA -->
+  <link rel="icon" href="/favicon.ico" />
   <link rel="manifest" href="/manifest.webmanifest">
+
+  <!-- Skip Link Styles -->
+  <style>
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #4f46e5;
+      color: white;
+      padding: 8px 16px;
+      z-index: 100;
+      text-decoration: none;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      border-radius: 0 0 4px 0;
+      transition: top 0.2s;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+  </style>
 </head>
 
 <body>
+  <!-- Skip to main content (accessibility) -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <div id="root"></div>
+  <main id="main-content"></main>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

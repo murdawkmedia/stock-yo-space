@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNDK } from '@/contexts/NDKContext';
-import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { NDKEvent } from '@nostr-dev-kit/ndk';
 import { useToast } from '@/hooks/useToast';
 import { nip19 } from 'nostr-tools';
 import type { SharedInventory } from '@/lib/inventoryTypes';
@@ -50,7 +49,7 @@ export function useSharing() {
   // Query: Get current sharing settings
   const { data: sharedUsers = [], isLoading } = useQuery({
     queryKey: ['inventory-shares', user?.pubkey],
-    queryFn: async (c) => {
+    queryFn: async () => {
       if (!user || !ndk) return [];
 
       const events = await ndk.fetchEvents({
@@ -83,7 +82,7 @@ export function useSharing() {
   // Query: Get users who have shared WITH the current user
   const { data: sharedWithMe = [] } = useQuery({
     queryKey: ['inventory-shared-with-me', user?.pubkey],
-    queryFn: async (c) => {
+    queryFn: async (_c) => {
       if (!user || !ndk) return [];
 
       // Search for share events that have the current user as a 'p' tag

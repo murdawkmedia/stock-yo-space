@@ -48,11 +48,11 @@ export function useZaps(
       // Only refetch if the query is currently being observed (component is mounted)
       return query.getObserversCount() > 0 ? 60000 : false;
     },
-    queryFn: async (c) => {
+    queryFn: async (_c) => {
       if (!actualTarget || !ndk) return [];
 
       // Query for zap receipts for this specific event
-      let filter: NDKFilter = { kinds: [9735 as NDKKind] };
+      const filter: NDKFilter = { kinds: [9735 as NDKKind] };
 
       if (actualTarget.kind >= 30000 && actualTarget.kind < 40000) {
         // Addressable event
